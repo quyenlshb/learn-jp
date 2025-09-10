@@ -10,6 +10,7 @@ import Learn from "./Learn";
 import CreateCourse from "./CreateCourse";
 import Home from "./Home";
 import Header from "./Header";
+import CourseDetail from "./CourseDetail";
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -29,6 +30,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/learn/:courseId" element={<Learn />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
+          <Route path="/course/:id" element={<CourseDetail />} />
           </>
         )}
       </Routes>
@@ -37,3 +39,4 @@ function App() {
 }
 
 export default App;
+
