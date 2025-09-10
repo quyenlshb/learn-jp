@@ -1,19 +1,24 @@
+// src/firebaseClient.js
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+// Cấu hình Firebase, giá trị lấy từ biến môi trường trên Vercel
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: "learn-jp-d4b2f.firebasestorage.app",
-  messagingSenderId: "626546742415",
-  appId: "1:626546742415:web:eaf5c391aa69a9c9884cfa"
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
+// Khởi tạo app Firebase
 const app = initializeApp(firebaseConfig);
 
+// Xuất các dịch vụ để dùng trong app
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
