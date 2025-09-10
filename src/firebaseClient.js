@@ -1,11 +1,11 @@
 // src/firebaseClient.js
 
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Cấu hình Firebase, giá trị lấy từ biến môi trường trên Vercel
+// Config Firebase - giá trị lấy từ biến môi trường
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -15,10 +15,12 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-// Khởi tạo app Firebase
 const app = initializeApp(firebaseConfig);
 
-// Xuất các dịch vụ để dùng trong app
+// Các dịch vụ
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Provider cho đăng nhập Google
+export const googleProvider = new GoogleAuthProvider();
