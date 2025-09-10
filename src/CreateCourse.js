@@ -18,10 +18,10 @@ const CreateCourse = () => {
         owner: auth.currentUser.uid,
         createdAt: serverTimestamp(),
       });
-      navigate("/home"); // quay lại trang chủ sau khi tạo
+      navigate("/home"); // quay lại trang chủ
     } catch (error) {
       console.error("Error adding course:", error);
-      alert("Không tạo được khóa học, thử lại!");
+      alert("Không tạo được khoá học, thử lại!");
     }
   };
 
