@@ -16,15 +16,25 @@ const SpeedReview = () => {
   const [timeLeft, setTimeLeft] = useState(60); // 60 giây
   const [gameOver, setGameOver] = useState(false);
 
+  // 👉 Lấy dữ liệu từ progress trước, nếu rỗng thì fallback sang courses
   useEffect(() => {
     const fetchWords = async () => {
+      let fetched = [];
+
+      // 1. Thử lấy từ progress
       const snap = await getDocs(
         collection(db, "users", auth.currentUser.uid, "progress")
       );
       const allProgress = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      const courseWords = allProgress.filter((w) => w.courseId === id);
+      fetched = allProgress.filter((w) => w.courseId === id);
 
-      setWords(courseWords);
+      // 2. Nếu progress rỗng → fallback sang toàn bộ từ trong course
+      if (fetched.length === 0) {
+        const courseSnap = await getDocs(collection(db, "courses", id, "words"));
+        fetched = courseSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
+
+      setWords(fetched);
     };
 
     fetchWords();
@@ -39,6 +49,7 @@ const SpeedReview = () => {
   useEffect(() => {
     if (timeLeft <= 0) {
       setGameOver(true);
+      return;
     }
     const timer = setInterval(() => {
       setTimeLeft((t) => t - 1);
