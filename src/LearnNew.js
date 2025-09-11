@@ -1,4 +1,4 @@
-// src/LearnNew.js
+// src/LearnNew.js (fix hiển thị khi không có từ mới)
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, setDoc } from "firebase/firestore";
@@ -8,8 +8,8 @@ const LearnNew = () => {
   const { id } = useParams(); // courseId
   const navigate = useNavigate();
   const [words, setWords] = useState([]);
-  const [limit, setLimit] = useState(10); // số từ mặc định
-  const [step, setStep] = useState("select"); // select | learn | done
+  const [limit, setLimit] = useState(10);
+  const [step, setStep] = useState("loading"); // loading | select | learn | done | empty
   const [currentIndex, setCurrentIndex] = useState(0);
   const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -19,18 +19,28 @@ const LearnNew = () => {
   // lấy từ chưa học
   useEffect(() => {
     const fetchWords = async () => {
-      const snap = await getDocs(collection(db, "courses", id, "words"));
-      const allWords = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      try {
+        const snap = await getDocs(collection(db, "courses", id, "words"));
+        const allWords = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      const progressSnap = await getDocs(
-        collection(db, "users", auth.currentUser.uid, "progress")
-      );
-      const progress = progressSnap.docs.map((d) => d.id);
+        const progressSnap = await getDocs(
+          collection(db, "users", auth.currentUser.uid, "progress")
+        );
+        const progress = progressSnap.docs.map((d) => d.id);
 
-      // lọc ra từ chưa học
-      const newWords = allWords.filter((w) => !progress.includes(w.id));
+        // lọc từ chưa học
+        const newWords = allWords.filter((w) => !progress.includes(w.id));
 
-      setWords(newWords);
+        if (newWords.length === 0) {
+          setStep("empty"); // không có từ mới
+        } else {
+          setWords(newWords);
+          setStep("select");
+        }
+      } catch (err) {
+        console.error("Lỗi tải từ mới:", err);
+        setStep("empty");
+      }
     };
 
     fetchWords();
@@ -79,7 +89,7 @@ const LearnNew = () => {
         intervalDays: 1,
         EF: 2.5,
         lastReviewed: now,
-        nextDue: new Date(now.getTime() + 24 * 60 * 60 * 1000), // ngày mai
+        nextDue: new Date(now.getTime() + 24 * 60 * 60 * 1000),
       },
       { merge: true }
     );
@@ -109,6 +119,34 @@ const LearnNew = () => {
       }
     }, 1500);
   };
+
+  // Loading
+  if (step === "loading") {
+    return <p style={{ textAlign: "center", marginTop: "50px" }}>⏳ Đang tải...</p>;
+  }
+
+  // Không có từ mới
+  if (step === "empty") {
+    return (
+      <div style={{ textAlign: "center", padding: "40px" }}>
+        <h2>🎉 Bạn đã học hết tất cả từ trong khóa này rồi!</h2>
+        <button
+          onClick={() => navigate(`/course/${id}`)}
+          style={{
+            marginTop: "20px",
+            padding: "10px 20px",
+            borderRadius: "5px",
+            border: "none",
+            background: "#2196F3",
+            color: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          Quay về khóa học
+        </button>
+      </div>
+    );
+  }
 
   // Bước chọn số lượng
   if (step === "select") {
@@ -140,7 +178,7 @@ const LearnNew = () => {
   }
 
   // Bước học
-  if (step === "learn" && words.length > 0) {
+  if (step === "learn") {
     const word = words[currentIndex];
 
     return (
@@ -225,7 +263,7 @@ const LearnNew = () => {
     );
   }
 
-  return <p>Đang tải...</p>;
+  return null;
 };
 
 export default LearnNew;
