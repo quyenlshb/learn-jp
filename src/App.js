@@ -11,6 +11,7 @@ import CreateCourse from "./CreateCourse";
 import Home from "./Home";
 import Header from "./Header";
 import CourseDetail from "./CourseDetail";
+import CourseView from "./CourseView";
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -31,6 +32,7 @@ function App() {
             <Route path="/learn/:courseId" element={<Learn />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           <Route path="/course/:id" element={<CourseDetail />} />
+          <Route path="/course/:id" element={<CourseView />} />
           </>
         )}
       </Routes>
@@ -39,4 +41,5 @@ function App() {
 }
 
 export default App;
+
 
