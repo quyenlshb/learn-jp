@@ -14,6 +14,7 @@ import CourseView from "./CourseView"; // dùng CourseView, bỏ CourseDetail
 import LearnNew from "./LearnNew";
 import Review from "./Review";
 import DifficultReview from "./DifficultReview";
+import SpeedReview from "./SpeedReview";
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -42,6 +43,7 @@ function App() {
             <Route path="/review/:id" element={<Review />} />
 <Route path="/difficult/:id" element={<DifficultReview />} />
             <Route path="/speed-review/:id" element={<div>Trang ôn tập nhanh</div>} />
+             <Route path="/speed-review/:id" element={<SpeedReview />} />
 
             {/* Route mặc định */}
             <Route path="*" element={<Navigate to="/home" replace />} />
@@ -53,5 +55,6 @@ function App() {
 }
 
 export default App;
+
 
 
