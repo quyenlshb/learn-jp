@@ -33,6 +33,12 @@ function App() {
             <Route path="*" element={<Navigate to="/home" replace />} />
           <Route path="/course/:id" element={<CourseDetail />} />
           <Route path="/course/:id" element={<CourseView />} />
+          <Route path="/course/:id" element={<CourseView />} />
+<Route path="/learn-new/:id" element={<div>Trang học từ mới</div>} />
+<Route path="/review/:id" element={<div>Trang ôn tập từ đã học</div>} />
+<Route path="/difficult/:id" element={<div>Trang ôn tập từ sai nhiều</div>} />
+<Route path="/speed-review/:id" element={<div>Trang ôn tập nhanh</div>} />
+
           </>
         )}
       </Routes>
@@ -41,5 +47,6 @@ function App() {
 }
 
 export default App;
+
 
 
