@@ -50,16 +50,16 @@ const Home = () => {
 
       <h3>Danh sách khoá học</h3>
       <ul>
-        {courses.length > 0 ? (
-          courses.map((c) => (
-            <li key={c.id}>
-              <Link to={`/learn/${c.id}`}>{c.title}</Link>
-            </li>
-          ))
-        ) : (
-          <p>Chưa có khoá học nào.</p>
-        )}
-      </ul>
+  {courses.length > 0 ? (
+    courses.map((c) => (
+      <li key={c.id}>
+        <Link to={`/course/${c.id}`}>{c.title}</Link>
+      </li>
+    ))
+  ) : (
+    <p>Chưa có khoá học nào.</p>
+  )}
+</ul>
     </div>
   );
 };
