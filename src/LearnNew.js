@@ -1,53 +1,54 @@
 // src/LearnNew.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs, query, where, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
 
 const LearnNew = () => {
   const { id } = useParams(); // courseId
   const navigate = useNavigate();
   const [words, setWords] = useState([]);
+  const [limit, setLimit] = useState(10); // số từ mặc định
+  const [step, setStep] = useState("select"); // select | learn | done
   const [currentIndex, setCurrentIndex] = useState(0);
   const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [showKana, setShowKana] = useState(false);
-  const [loading, setLoading] = useState(true);
 
+  // lấy từ chưa học
   useEffect(() => {
-    const fetchNewWords = async () => {
-      try {
-        const q = query(collection(db, "words"), where("courseId", "==", id));
-        const snapshot = await getDocs(q);
-        const allWords = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const fetchWords = async () => {
+      const snap = await getDocs(collection(db, "courses", id, "words"));
+      const allWords = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-        const progressSnap = await getDocs(
-          collection(db, "users", auth.currentUser.uid, "progress")
-        );
-        const learnedIds = progressSnap.docs.map((d) => d.id);
+      const progressSnap = await getDocs(
+        collection(db, "users", auth.currentUser.uid, "progress")
+      );
+      const progress = progressSnap.docs.map((d) => d.id);
 
-        const newWords = allWords.filter((w) => !learnedIds.includes(w.id));
-        setWords(newWords.slice(0, 10));
-        setLoading(false);
-      } catch (error) {
-        console.error("Lỗi tải từ mới:", error);
-      }
+      // lọc ra từ chưa học
+      const newWords = allWords.filter((w) => !progress.includes(w.id));
+
+      setWords(newWords);
     };
 
-    fetchNewWords();
+    fetchWords();
   }, [id]);
 
+  // tạo lựa chọn
   useEffect(() => {
-    if (words.length > 0) {
+    if (step === "learn" && words.length > 0) {
       generateOptions(words[currentIndex]);
     }
-  }, [words, currentIndex]);
+  }, [step, currentIndex, words]);
 
   const generateOptions = (word) => {
-    const pool = words.filter((w) => w.id !== word.id);
-    const shuffled = pool.sort(() => 0.5 - Math.random());
-    const wrongs = shuffled.slice(0, 3).map((w) => w.meaning);
+    const shuffled = [...words].sort(() => 0.5 - Math.random());
+    const wrongs = shuffled
+      .filter((w) => w.id !== word.id)
+      .slice(0, 3)
+      .map((w) => w.meaning);
 
     const opts = [...wrongs, word.meaning].sort(() => 0.5 - Math.random());
     setOptions(opts);
@@ -64,127 +65,167 @@ const LearnNew = () => {
     window.speechSynthesis.speak(utter);
   };
 
+  const saveProgress = async (word, isCorrect) => {
+    const now = new Date();
+    await setDoc(
+      doc(db, "users", auth.currentUser.uid, "progress", word.id),
+      {
+        ...word,
+        courseId: id,
+        status: isCorrect ? "learning" : "difficult",
+        timesSeen: 1,
+        timesCorrect: isCorrect ? 1 : 0,
+        wrongCount: isCorrect ? 0 : 1,
+        intervalDays: 1,
+        EF: 2.5,
+        lastReviewed: now,
+        nextDue: new Date(now.getTime() + 24 * 60 * 60 * 1000), // ngày mai
+      },
+      { merge: true }
+    );
+  };
+
   const handleAnswer = async (choice) => {
+    const word = words[currentIndex];
+    const isCorrect = choice === word.meaning;
+
     setSelected(choice);
     setShowKana(true);
+    speakWord(word);
 
-    // Phát âm từ sau khi chọn đáp án
-    speakWord(words[currentIndex]);
+    setFeedback(
+      isCorrect
+        ? "🌱 Chính xác! Hạt giống đang nảy mầm 🌿"
+        : `🥀 Sai rồi. Đáp án đúng: ${word.meaning}`
+    );
 
-    if (choice === words[currentIndex].meaning) {
-      setFeedback("✅ Chính xác!");
-      const word = words[currentIndex];
-      await setDoc(
-        doc(db, "users", auth.currentUser.uid, "progress", word.id),
-        {
-          courseId: id,
-          timesSeen: 1,
-          timesCorrect: 1,
-          wrongCount: 0,
-          correctStreak: 1,
-          incorrectStreak: 0,
-          intervalDays: 1,
-          EF: 2.5,
-          lastReviewed: new Date(),
-          nextDue: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          status: "learning",
-        }
-      );
-    } else {
-      setFeedback(`❌ Sai. Đúng là: ${words[currentIndex].meaning}`);
-    }
+    await saveProgress(word, isCorrect);
 
     setTimeout(() => {
-      if (currentIndex + 1 < words.length) {
+      if (currentIndex + 1 < Math.min(limit, words.length)) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        alert("Hoàn thành buổi học từ mới!");
-        navigate(`/course/${id}`);
+        setStep("done");
       }
     }, 1500);
   };
 
-  if (loading) return <p>Đang tải...</p>;
-  if (words.length === 0) return <p>Không còn từ mới để học.</p>;
-
-  const word = words[currentIndex];
-
-  return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h2>Học từ mới (Trắc nghiệm)</h2>
-      <p>
-        Từ {currentIndex + 1}/{words.length}
-      </p>
-
-      <div
-        style={{
-          margin: "30px auto",
-          padding: "40px",
-          border: "2px solid #333",
-          borderRadius: "10px",
-          width: "300px",
-          fontSize: "28px",
-          position: "relative",
-        }}
-      >
-        {word.kanji || word.kana}
-        {showKana && (
-          <p style={{ fontSize: "20px", marginTop: "15px", color: "#555" }}>
-            {word.kana}
-          </p>
-        )}
-      </div>
-
-      <div style={{ marginTop: "20px" }}>
-        {options.map((opt, i) => (
+  // Bước chọn số lượng
+  if (step === "select") {
+    return (
+      <div style={{ textAlign: "center", padding: "40px" }}>
+        <h2>Chọn số lượng từ để học hôm nay</h2>
+        {[5, 10, 20].map((num) => (
           <button
-            key={i}
-            onClick={() => handleAnswer(opt)}
-            disabled={!!selected}
+            key={num}
+            onClick={() => {
+              setLimit(num);
+              setStep("learn");
+            }}
             style={{
-              display: "block",
-              margin: "10px auto",
+              margin: "10px",
               padding: "10px 20px",
-              width: "250px",
-              background:
-                selected === opt
-                  ? opt === word.meaning
-                    ? "#4CAF50"
-                    : "#f44336"
-                  : "#2196F3",
-              color: "white",
-              border: "none",
               borderRadius: "5px",
+              border: "none",
+              background: "#2196F3",
+              color: "#fff",
               cursor: "pointer",
-              fontSize: "16px",
             }}
           >
-            {opt}
+            {num} từ
           </button>
         ))}
       </div>
+    );
+  }
 
-      {feedback && <p style={{ marginTop: "15px" }}>{feedback}</p>}
+  // Bước học
+  if (step === "learn" && words.length > 0) {
+    const word = words[currentIndex];
 
-      {/* Nút nghe lại */}
-      {showKana && (
+    return (
+      <div style={{ textAlign: "center", padding: "20px" }}>
+        <h2>
+          Học từ mới {currentIndex + 1}/{Math.min(limit, words.length)}
+        </h2>
+
+        <div
+          style={{
+            margin: "30px auto",
+            padding: "40px",
+            border: "2px solid #333",
+            borderRadius: "10px",
+            width: "300px",
+            fontSize: "28px",
+          }}
+        >
+          {word.kanji || word.kana}
+          {showKana && (
+            <p style={{ fontSize: "20px", marginTop: "15px", color: "#555" }}>
+              {word.kana}
+            </p>
+          )}
+        </div>
+
+        <div>
+          {options.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => handleAnswer(opt)}
+              disabled={!!selected}
+              style={{
+                display: "block",
+                margin: "10px auto",
+                padding: "10px 20px",
+                width: "250px",
+                background:
+                  selected === opt
+                    ? opt === word.meaning
+                      ? "#4CAF50"
+                      : "#f44336"
+                    : "#2196F3",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+                fontSize: "16px",
+              }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+
+        {feedback && <p style={{ marginTop: "15px" }}>{feedback}</p>}
+      </div>
+    );
+  }
+
+  // Bước hoàn thành
+  if (step === "done") {
+    return (
+      <div style={{ textAlign: "center", padding: "40px" }}>
+        <h2>🎉 Hoàn thành buổi học!</h2>
+        <p>Bạn đã gieo hạt thành công cho {Math.min(limit, words.length)} từ mới 🌱</p>
         <button
-          onClick={() => speakWord(word)}
+          onClick={() => navigate(`/course/${id}`)}
           style={{
             marginTop: "20px",
-            padding: "8px 16px",
-            background: "#FF9800",
-            color: "#fff",
-            border: "none",
+            padding: "10px 20px",
             borderRadius: "5px",
+            border: "none",
+            background: "#2196F3",
+            color: "#fff",
             cursor: "pointer",
           }}
         >
-          🔊 Nghe lại
+          Quay về khóa học
         </button>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  return <p>Đang tải...</p>;
 };
 
 export default LearnNew;
