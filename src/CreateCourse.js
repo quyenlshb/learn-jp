@@ -6,6 +6,7 @@ import { db, auth } from "./firebaseClient";
 
 const CreateCourse = () => {
   const [title, setTitle] = useState("");
+  const [wordList, setWordList] = useState(""); // danh sách từ copy–paste
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -13,14 +14,36 @@ const CreateCourse = () => {
     if (!title.trim()) return;
 
     try {
-      await addDoc(collection(db, "courses"), {
+      // Tạo khoá học
+      const courseRef = await addDoc(collection(db, "courses"), {
         title: title.trim(),
         owner: auth.currentUser.uid,
         createdAt: serverTimestamp(),
       });
-      navigate("/home"); // quay lại trang chủ
+
+      // Xử lý danh sách từ
+      if (wordList.trim()) {
+        const lines = wordList.trim().split("\n");
+        for (let line of lines) {
+          const parts = line.trim().split(/\s{2,}|\t/); 
+          // tách theo tab hoặc >=2 khoảng trắng
+          if (parts.length >= 3) {
+            const [kanji, kana, meaning] = parts;
+            await addDoc(collection(db, "words"), {
+              courseId: courseRef.id,
+              kanji: kanji.trim(),
+              kana: kana.trim(),
+              meaning: meaning.trim(),
+              createdAt: serverTimestamp(),
+            });
+          }
+        }
+      }
+
+      // Quay lại Trang chủ
+      navigate("/home");
     } catch (error) {
-      console.error("Error adding course:", error);
+      console.error("Error creating course:", error);
       alert("Không tạo được khoá học, thử lại!");
     }
   };
@@ -29,14 +52,32 @@ const CreateCourse = () => {
     <div style={{ padding: "20px" }}>
       <h2>Tạo khoá học mới</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Tên khoá học (vd: JLPT N5)"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ padding: "10px", width: "300px" }}
-        />
-        <br />
+        {/* Tên khoá học */}
+        <div style={{ marginBottom: "15px" }}>
+          <label>Tên khoá học:</label>
+          <br />
+          <input
+            type="text"
+            placeholder="vd: JLPT N5"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{ padding: "10px", width: "300px" }}
+          />
+        </div>
+
+        {/* Danh sách từ */}
+        <div style={{ marginBottom: "15px" }}>
+          <label>Danh sách từ (mỗi dòng: Kanji  Kana  Nghĩa):</label>
+          <br />
+          <textarea
+            placeholder={`Ví dụ:\n日  にち  ngày\n月  つき  mặt trăng`}
+            value={wordList}
+            onChange={(e) => setWordList(e.target.value)}
+            rows="10"
+            style={{ width: "100%", padding: "10px" }}
+          />
+        </div>
+
         <button
           type="submit"
           style={{
@@ -49,7 +90,7 @@ const CreateCourse = () => {
             cursor: "pointer",
           }}
         >
-          Lưu
+          Lưu khoá học
         </button>
       </form>
     </div>
