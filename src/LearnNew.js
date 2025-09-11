@@ -12,6 +12,7 @@ const LearnNew = () => {
   const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
+  const [showKana, setShowKana] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,7 +45,6 @@ const LearnNew = () => {
   }, [words, currentIndex]);
 
   const generateOptions = (word) => {
-    // Lấy 3 nghĩa sai + 1 nghĩa đúng
     const pool = words.filter((w) => w.id !== word.id);
     const shuffled = pool.sort(() => 0.5 - Math.random());
     const wrongs = shuffled.slice(0, 3).map((w) => w.meaning);
@@ -53,15 +53,26 @@ const LearnNew = () => {
     setOptions(opts);
     setSelected(null);
     setFeedback("");
+    setShowKana(false);
+  };
+
+  const speakWord = (word) => {
+    if (!word) return;
+    const utter = new SpeechSynthesisUtterance(word.kana || word.kanji);
+    utter.lang = "ja-JP";
+    utter.rate = 0.9;
+    window.speechSynthesis.speak(utter);
   };
 
   const handleAnswer = async (choice) => {
     setSelected(choice);
+    setShowKana(true);
+
+    // Phát âm từ sau khi chọn đáp án
+    speakWord(words[currentIndex]);
 
     if (choice === words[currentIndex].meaning) {
       setFeedback("✅ Chính xác!");
-
-      // lưu progress
       const word = words[currentIndex];
       await setDoc(
         doc(db, "users", auth.currentUser.uid, "progress", word.id),
@@ -90,7 +101,7 @@ const LearnNew = () => {
         alert("Hoàn thành buổi học từ mới!");
         navigate(`/course/${id}`);
       }
-    }, 1200);
+    }, 1500);
   };
 
   if (loading) return <p>Đang tải...</p>;
@@ -113,9 +124,15 @@ const LearnNew = () => {
           borderRadius: "10px",
           width: "300px",
           fontSize: "28px",
+          position: "relative",
         }}
       >
         {word.kanji || word.kana}
+        {showKana && (
+          <p style={{ fontSize: "20px", marginTop: "15px", color: "#555" }}>
+            {word.kana}
+          </p>
+        )}
       </div>
 
       <div style={{ marginTop: "20px" }}>
@@ -148,6 +165,24 @@ const LearnNew = () => {
       </div>
 
       {feedback && <p style={{ marginTop: "15px" }}>{feedback}</p>}
+
+      {/* Nút nghe lại */}
+      {showKana && (
+        <button
+          onClick={() => speakWord(word)}
+          style={{
+            marginTop: "20px",
+            padding: "8px 16px",
+            background: "#FF9800",
+            color: "#fff",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          🔊 Nghe lại
+        </button>
+      )}
     </div>
   );
 };
