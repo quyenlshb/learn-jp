@@ -11,6 +11,7 @@ import CreateCourse from "./CreateCourse";
 import Home from "./Home";
 import Header from "./Header";
 import CourseView from "./CourseView"; // dùng CourseView, bỏ CourseDetail
+import LearnNew from "./LearnNew";
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -35,7 +36,7 @@ function App() {
             <Route path="/course/:id" element={<CourseView />} />
 
             {/* Các chế độ học */}
-            <Route path="/learn-new/:id" element={<div>Trang học từ mới</div>} />
+           <Route path="/learn-new/:id" element={<LearnNew />} />
             <Route path="/review/:id" element={<div>Trang ôn tập từ đã học</div>} />
             <Route path="/difficult/:id" element={<div>Trang ôn tập từ sai nhiều</div>} />
             <Route path="/speed-review/:id" element={<div>Trang ôn tập nhanh</div>} />
@@ -50,3 +51,4 @@ function App() {
 }
 
 export default App;
+
