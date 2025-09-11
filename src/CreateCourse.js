@@ -1,96 +1,111 @@
 // src/CreateCourse.js
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
+import { useNavigate } from "react-router-dom";
 
 const CreateCourse = () => {
   const [title, setTitle] = useState("");
-  const [wordList, setWordList] = useState(""); // danh sách từ copy–paste
+  const [rawWords, setRawWords] = useState(""); // nhập list từ
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleCreateCourse = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+
+    if (!title.trim()) {
+      alert("⚠️ Vui lòng nhập tên khóa học");
+      return;
+    }
 
     try {
-      // Tạo khoá học
+      // tạo document khóa học trong Firestore
       const courseRef = await addDoc(collection(db, "courses"), {
-        title: title.trim(),
+        title,
         owner: auth.currentUser.uid,
-        createdAt: serverTimestamp(),
+        createdAt: new Date(),
       });
 
-      // Xử lý danh sách từ
-      if (wordList.trim()) {
-        const lines = wordList.trim().split("\n");
-        for (let line of lines) {
-          const parts = line.trim().split(/\s{2,}|\t/); 
-          // tách theo tab hoặc >=2 khoảng trắng
-          if (parts.length >= 3) {
-            const [kanji, kana, meaning] = parts;
-            await addDoc(collection(db, "words"), {
-              courseId: courseRef.id,
-              kanji: kanji.trim(),
-              kana: kana.trim(),
-              meaning: meaning.trim(),
-              createdAt: serverTimestamp(),
-            });
-          }
+      const courseId = courseRef.id;
+
+      // tách list từ trong textarea
+      const lines = rawWords.split("\n").map((l) => l.trim()).filter(Boolean);
+
+      for (const line of lines) {
+        // Format: Kanji Kana Nghĩa
+        const parts = line.split(/\s+/);
+        if (parts.length >= 3) {
+          const kanji = parts[0];
+          const kana = parts[1];
+          const meaning = parts.slice(2).join(" ");
+
+          await addDoc(collection(db, "courses", courseId, "words"), {
+            kanji,
+            kana,
+            meaning,
+          });
         }
       }
 
-      // Quay lại Trang chủ
+      alert("✅ Tạo khóa học thành công!");
       navigate("/home");
-    } catch (error) {
-      console.error("Error creating course:", error);
-      alert("Không tạo được khoá học, thử lại!");
+    } catch (err) {
+      console.error("Lỗi tạo khóa học:", err);
+      alert("❌ Có lỗi xảy ra khi tạo khóa học.");
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Tạo khoá học mới</h2>
-      <form onSubmit={handleSubmit}>
-        {/* Tên khoá học */}
-        <div style={{ marginBottom: "15px" }}>
-          <label>Tên khoá học:</label>
-          <br />
+    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
+      <h2>Tạo khóa học mới</h2>
+      <form onSubmit={handleCreateCourse}>
+        <div style={{ marginBottom: "20px" }}>
+          <label>Tên khóa học:</label>
           <input
             type="text"
-            placeholder="vd: JLPT N5"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            style={{ padding: "10px", width: "300px" }}
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginTop: "5px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
           />
         </div>
 
-        {/* Danh sách từ */}
-        <div style={{ marginBottom: "15px" }}>
-          <label>Danh sách từ (mỗi dòng: Kanji  Kana  Nghĩa):</label>
-          <br />
+        <div style={{ marginBottom: "20px" }}>
+          <label>
+            Danh sách từ (mỗi dòng: <b>Kanji Kana Nghĩa</b>):
+          </label>
           <textarea
-            placeholder={`Ví dụ:\n日  にち  ngày\n月  つき  mặt trăng`}
-            value={wordList}
-            onChange={(e) => setWordList(e.target.value)}
             rows="10"
-            style={{ width: "100%", padding: "10px" }}
-          />
+            value={rawWords}
+            onChange={(e) => setRawWords(e.target.value)}
+            placeholder={`犬 いぬ Chó\n猫 ねこ Mèo\n日本 にほん Nhật Bản`}
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginTop: "5px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+              fontFamily: "monospace",
+            }}
+          ></textarea>
         </div>
 
         <button
           type="submit"
           style={{
-            marginTop: "20px",
             padding: "10px 20px",
-            backgroundColor: "#4CAF50",
+            background: "#2196F3",
             color: "#fff",
             border: "none",
             borderRadius: "5px",
             cursor: "pointer",
           }}
         >
-          Lưu khoá học
+          Tạo khóa học
         </button>
       </form>
     </div>
