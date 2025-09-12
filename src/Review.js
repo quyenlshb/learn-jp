@@ -1,7 +1,7 @@
 // src/Review.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
 
 const Review = () => {
@@ -15,6 +15,7 @@ const Review = () => {
   const [showKana, setShowKana] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // lấy danh sách từ cần ôn
   useEffect(() => {
     const fetchDueWords = async () => {
       try {
@@ -26,14 +27,15 @@ const Review = () => {
           ...d.data(),
         }));
 
-        const dueWords = allProgress.filter((w) => {
-          return w.courseId === id && w.nextDue && new Date(w.nextDue) <= new Date();
-        });
+        const dueWords = allProgress.filter(
+          (w) => w.courseId === id && w.nextDue && new Date(w.nextDue) <= new Date()
+        );
 
         setWords(dueWords);
         setLoading(false);
       } catch (error) {
         console.error("Lỗi tải từ cần ôn:", error);
+        setLoading(false);
       }
     };
 
@@ -68,19 +70,21 @@ const Review = () => {
     window.speechSynthesis.speak(utter);
   };
 
+  // cập nhật tiến độ và đánh dấu đã học
   const updateProgress = async (word, isCorrect) => {
     const now = new Date();
     let interval = word.intervalDays || 1;
     let EF = word.EF || 2.5;
 
     if (isCorrect) {
-      interval = Math.round(interval * EF); // tăng khoảng cách
-      EF = Math.min(EF + 0.1, 3); // tăng nhẹ độ dễ
+      interval = Math.round(interval * EF);
+      EF = Math.min(EF + 0.1, 3);
     } else {
-      interval = 1; // sai thì reset về 1 ngày
+      interval = 1;
       EF = Math.max(EF - 0.3, 1.3);
     }
 
+    // 1️⃣ Cập nhật progress user
     await setDoc(
       doc(db, "users", auth.currentUser.uid, "progress", word.id),
       {
@@ -95,18 +99,24 @@ const Review = () => {
       },
       { merge: true }
     );
+
+    // 2️⃣ Đánh dấu isLearned trong words
+    await updateDoc(doc(db, "courses", id, "words", word.id), {
+      isLearned: true,
+    });
   };
 
   const handleAnswer = async (choice) => {
     setSelected(choice);
     setShowKana(true);
 
-    speakWord(words[currentIndex]);
+    const word = words[currentIndex];
+    speakWord(word);
 
-    const isCorrect = choice === words[currentIndex].meaning;
-    setFeedback(isCorrect ? "✅ Chính xác!" : `❌ Sai. Đúng: ${words[currentIndex].meaning}`);
+    const isCorrect = choice === word.meaning;
+    setFeedback(isCorrect ? "✅ Chính xác!" : `❌ Sai. Đúng: ${word.meaning}`);
 
-    await updateProgress(words[currentIndex], isCorrect);
+    await updateProgress(word, isCorrect);
 
     setTimeout(() => {
       if (currentIndex + 1 < words.length) {
@@ -119,7 +129,8 @@ const Review = () => {
   };
 
   if (loading) return <p>Đang tải...</p>;
-  if (words.length === 0) return <p>Không có từ nào cần ôn hôm nay 🎉</p>;
+  if (words.length === 0)
+    return <p style={{ textAlign: "center", marginTop: "40px" }}>🎉 Không có từ nào cần ôn hôm nay</p>;
 
   const word = words[currentIndex];
 
