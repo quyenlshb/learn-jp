@@ -1,34 +1,58 @@
 // src/CourseView.js
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "./firebaseClient";
 
 const CourseView = () => {
   const { id } = useParams(); // id khoá học
   const [words, setWords] = useState([]);
   const [learnedCount, setLearnedCount] = useState(0);
+  const [editWordId, setEditWordId] = useState(null);
+  const [editData, setEditData] = useState({ kanji: "", kana: "", meaning: "" });
+
+  const fetchWords = async () => {
+    try {
+      const q = query(collection(db, "words"), where("courseId", "==", id));
+      const snapshot = await getDocs(q);
+      const list = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+      setWords(list);
+      setLearnedCount(0); // ⚠️ sau này thay bằng dữ liệu thực tế
+    } catch (error) {
+      console.error("Lỗi tải từ vựng:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchWords = async () => {
-      try {
-        const q = query(collection(db, "words"), where("courseId", "==", id));
-        const snapshot = await getDocs(q);
-        const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setWords(list);
-
-        // ⚠️ Sau này sẽ thay bằng dữ liệu thực tế user progress
-        setLearnedCount(0);
-      } catch (error) {
-        console.error("Lỗi tải từ vựng:", error);
-      }
-    };
-
     fetchWords();
   }, [id]);
 
   const total = words.length;
   const progress = total > 0 ? Math.round((learnedCount / total) * 100) : 0;
+
+  // Xóa từ
+  const handleDeleteWord = async (wordId) => {
+    if (!window.confirm("Bạn có chắc muốn xóa từ này không?")) return;
+    await deleteDoc(doc(db, "words", wordId));
+    fetchWords();
+  };
+
+  // Bắt đầu sửa từ
+  const handleStartEdit = (word) => {
+    setEditWordId(word.id);
+    setEditData({ kanji: word.kanji || "", kana: word.kana || "", meaning: word.meaning || "" });
+  };
+
+  // Lưu sau khi sửa
+  const handleSaveEdit = async () => {
+    await updateDoc(doc(db, "words", editWordId), {
+      kanji: editData.kanji,
+      kana: editData.kana,
+      meaning: editData.meaning,
+    });
+    setEditWordId(null);
+    fetchWords();
+  };
 
   return (
     <div style={{ padding: "20px" }}>
@@ -101,14 +125,60 @@ const CourseView = () => {
               <th style={thStyle}>Kanji</th>
               <th style={thStyle}>Kana</th>
               <th style={thStyle}>Nghĩa</th>
+              <th style={thStyle}>Hành động</th>
             </tr>
           </thead>
           <tbody>
             {words.map((w) => (
               <tr key={w.id}>
-                <td style={tdStyle}>{w.kanji || "-"}</td>
-                <td style={tdStyle}>{w.kana}</td>
-                <td style={tdStyle}>{w.meaning}</td>
+                {editWordId === w.id ? (
+                  <>
+                    <td style={tdStyle}>
+                      <input
+                        type="text"
+                        value={editData.kanji}
+                        onChange={(e) => setEditData({ ...editData, kanji: e.target.value })}
+                      />
+                    </td>
+                    <td style={tdStyle}>
+                      <input
+                        type="text"
+                        value={editData.kana}
+                        onChange={(e) => setEditData({ ...editData, kana: e.target.value })}
+                      />
+                    </td>
+                    <td style={tdStyle}>
+                      <input
+                        type="text"
+                        value={editData.meaning}
+                        onChange={(e) => setEditData({ ...editData, meaning: e.target.value })}
+                      />
+                    </td>
+                    <td style={tdStyle}>
+                      <button onClick={handleSaveEdit} style={{ marginRight: "5px" }}>
+                        Lưu
+                      </button>
+                      <button onClick={() => setEditWordId(null)}>Hủy</button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td style={tdStyle}>{w.kanji || "-"}</td>
+                    <td style={tdStyle}>{w.kana}</td>
+                    <td style={tdStyle}>{w.meaning}</td>
+                    <td style={tdStyle}>
+                      <button onClick={() => handleStartEdit(w)} style={{ marginRight: "5px" }}>
+                        ✏️ Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeleteWord(w.id)}
+                        style={{ background: "red", color: "white" }}
+                      >
+                        🗑️ Xóa
+                      </button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
