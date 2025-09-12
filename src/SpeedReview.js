@@ -1,7 +1,7 @@
 // src/SpeedReview.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
 
 const SpeedReview = () => {
@@ -70,14 +70,55 @@ const SpeedReview = () => {
     setSelected(null);
   };
 
-  const handleAnswer = (choice) => {
+  const updateProgress = async (word, isCorrect) => {
+    const now = new Date();
+    let interval = word.intervalDays || 1;
+    let EF = word.EF || 2.0;
+
+    if (isCorrect) {
+      interval = Math.round(interval * EF);
+      EF = Math.min(EF + 0.05, 3);
+    } else {
+      interval = 1;
+      EF = Math.max(EF - 0.2, 1.3);
+    }
+
+    // 1️⃣ update progress
+    await setDoc(
+      doc(db, "users", auth.currentUser.uid, "progress", word.id),
+      {
+        ...word,
+        courseId: id,
+        timesSeen: (word.timesSeen || 0) + 1,
+        timesCorrect: (word.timesCorrect || 0) + (isCorrect ? 1 : 0),
+        wrongCount: (word.wrongCount || 0) + (isCorrect ? 0 : 1),
+        intervalDays: interval,
+        EF,
+        lastReviewed: now,
+        nextDue: new Date(now.getTime() + interval * 24 * 60 * 60 * 1000),
+      },
+      { merge: true }
+    );
+
+    // 2️⃣ đánh dấu đã học trong course
+    await updateDoc(doc(db, "courses", id, "words", word.id), {
+      isLearned: true,
+    });
+  };
+
+  const handleAnswer = async (choice) => {
+    const word = words[currentIndex];
+    const isCorrect = choice === word.meaning;
+
     setSelected(choice);
 
-    if (choice === words[currentIndex].meaning) {
+    if (isCorrect) {
       setScore((s) => s + 1);
     } else {
       setScore((s) => Math.max(s - 1, 0));
     }
+
+    await updateProgress(word, isCorrect);
 
     setTimeout(() => {
       if (currentIndex + 1 < words.length && timeLeft > 0) {
