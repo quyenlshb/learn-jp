@@ -1,158 +1,129 @@
 // src/CourseDetail.js
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  query,
-  where,
-  serverTimestamp,
-} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { db } from "./firebaseClient";
+import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 
-const CourseDetail = () => {
-  const { id } = useParams(); // lấy id khoá học từ URL
-  const [words, setWords] = useState([]);
-  const [kanji, setKanji] = useState("");
-  const [kana, setKana] = useState("");
-  const [meaning, setMeaning] = useState("");
-  const [romaji, setRomaji] = useState("");
+function CourseDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [course, setCourse] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [newName, setNewName] = useState("");
 
-  // Lấy danh sách từ vựng theo courseId
-  const fetchWords = async () => {
-    try {
-      const q = query(collection(db, "words"), where("courseId", "==", id));
-      const snapshot = await getDocs(q);
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setWords(list);
-    } catch (error) {
-      console.error("Lỗi lấy từ vựng:", error);
+  // Lấy thông tin khóa học
+  const fetchCourse = async () => {
+    const snap = await getDoc(doc(db, "courses", id));
+    if (snap.exists()) {
+      setCourse({ id: snap.id, ...snap.data() });
+      setNewName(snap.data().name);
     }
   };
 
   useEffect(() => {
-    fetchWords();
+    fetchCourse();
   }, [id]);
 
-  // Thêm từ mới
-  const handleAddWord = async (e) => {
-    e.preventDefault();
-    if (!kanji && !kana) return;
-
+  // Xóa khóa học (bao gồm toàn bộ words)
+  const handleDeleteCourse = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
     try {
-      await addDoc(collection(db, "words"), {
-        courseId: id,
-        kanji,
-        kana,
-        meaning,
-        romaji,
-        createdAt: serverTimestamp(),
-      });
+      // Xóa toàn bộ từ trong subcollection
+      const wordsSnap = await getDocs(collection(db, "courses", id, "words"));
+      const deletePromises = wordsSnap.docs.map((d) =>
+        deleteDoc(doc(db, "courses", id, "words", d.id))
+      );
+      await Promise.all(deletePromises);
 
-      // Reset form
-      setKanji("");
-      setKana("");
-      setMeaning("");
-      setRomaji("");
+      // Xóa document khóa học
+      await deleteDoc(doc(db, "courses", id));
 
-      // Load lại danh sách
-      fetchWords();
-    } catch (error) {
-      console.error("Lỗi thêm từ:", error);
+      alert("✅ Đã xóa khóa học!");
+      navigate("/home");
+    } catch (err) {
+      console.error("Lỗi khi xóa:", err);
+      alert("❌ Xóa thất bại, vui lòng thử lại.");
     }
   };
 
-  // Xoá từ
-  const handleDelete = async (wordId) => {
+  // Cập nhật tên khóa học
+  const handleUpdateCourse = async () => {
+    if (!newName.trim()) {
+      alert("Tên khóa học không được để trống");
+      return;
+    }
     try {
-      await deleteDoc(doc(db, "words", wordId));
-      setWords((prev) => prev.filter((w) => w.id !== wordId));
-    } catch (error) {
-      console.error("Lỗi xoá từ:", error);
+      await updateDoc(doc(db, "courses", id), { name: newName });
+      alert("✅ Đã cập nhật tên khóa học!");
+      setEditMode(false);
+      fetchCourse();
+    } catch (err) {
+      console.error("Lỗi khi cập nhật:", err);
+      alert("❌ Cập nhật thất bại, vui lòng thử lại.");
     }
   };
+
+  if (!course) return <p>Đang tải...</p>;
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Chi tiết khoá học</h2>
+      <h2>Chi tiết khóa học</h2>
 
-      {/* Form thêm từ mới */}
-      <form onSubmit={handleAddWord} style={{ marginBottom: "20px" }}>
-        <input
-          type="text"
-          placeholder="Kanji"
-          value={kanji}
-          onChange={(e) => setKanji(e.target.value)}
-          style={{ marginRight: "10px", padding: "5px" }}
-        />
-        <input
-          type="text"
-          placeholder="Kana"
-          value={kana}
-          onChange={(e) => setKana(e.target.value)}
-          style={{ marginRight: "10px", padding: "5px" }}
-        />
-        <input
-          type="text"
-          placeholder="Romaji"
-          value={romaji}
-          onChange={(e) => setRomaji(e.target.value)}
-          style={{ marginRight: "10px", padding: "5px" }}
-        />
-        <input
-          type="text"
-          placeholder="Nghĩa tiếng Việt"
-          value={meaning}
-          onChange={(e) => setMeaning(e.target.value)}
-          style={{ marginRight: "10px", padding: "5px" }}
-        />
-        <button
-          type="submit"
-          style={{
-            padding: "6px 12px",
-            backgroundColor: "#4CAF50",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-          }}
-        >
-          ➕ Thêm từ
-        </button>
-      </form>
-
-      {/* Danh sách từ vựng */}
-      <h3>Danh sách từ</h3>
-      {words.length > 0 ? (
-        <ul>
-          {words.map((w) => (
-            <li key={w.id} style={{ marginBottom: "8px" }}>
-              <strong>{w.kanji || w.kana}</strong> ({w.kana}) [{w.romaji}] →{" "}
-              {w.meaning}
-              <button
-                onClick={() => handleDelete(w.id)}
-                style={{
-                  marginLeft: "10px",
-                  backgroundColor: "#f44336",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  padding: "4px 8px",
-                }}
-              >
-                🗑 Xoá
-              </button>
-            </li>
-          ))}
-        </ul>
+      {editMode ? (
+        <div>
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            style={{ padding: "6px", marginRight: "10px" }}
+          />
+          <button onClick={handleUpdateCourse} style={{ marginRight: "5px" }}>
+            Lưu
+          </button>
+          <button onClick={() => setEditMode(false)}>Hủy</button>
+        </div>
       ) : (
-        <p>Chưa có từ nào.</p>
+        <h3>
+          {course.name}{" "}
+          <button onClick={() => setEditMode(true)} style={{ marginLeft: "10px" }}>
+            ✏️ Sửa
+          </button>
+        </h3>
       )}
+
+      <div style={{ margin: "20px 0" }}>
+        <Link to={`/course/${id}/view`}>
+          <button style={{ marginRight: "10px" }}>📖 Xem từ vựng</button>
+        </Link>
+        <Link to={`/learn-new/${id}`}>
+          <button style={{ marginRight: "10px" }}>🆕 Học từ mới</button>
+        </Link>
+        <Link to={`/review/${id}`}>
+          <button style={{ marginRight: "10px" }}>🔄 Ôn tập</button>
+        </Link>
+        <Link to={`/difficult/${id}`}>
+          <button style={{ marginRight: "10px" }}>⚡ Ôn từ khó</button>
+        </Link>
+        <Link to={`/speed-review/${id}`}>
+          <button>⏱️ Ôn tập nhanh</button>
+        </Link>
+      </div>
+
+      <button
+        onClick={handleDeleteCourse}
+        style={{
+          background: "red",
+          color: "white",
+          padding: "8px 12px",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        🗑️ Xóa khóa học
+      </button>
     </div>
   );
-};
+}
 
 export default CourseDetail;
