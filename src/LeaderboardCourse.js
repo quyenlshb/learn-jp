@@ -9,7 +9,7 @@ const LeaderboardCourse = ({ courseId }) => {
   const fetchLeaderboard = async () => {
     try {
       const q = query(
-        collection(db, "courses", courseId, "scores"), // ✅ subcollection scores
+        collection(db, "courses", courseId, "scores"), // subcollection lưu điểm
         orderBy("points", "desc"),
         limit(10)
       );
