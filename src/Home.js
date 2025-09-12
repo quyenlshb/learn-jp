@@ -38,11 +38,20 @@ const Home = () => {
     fetchCourses();
   }, []);
 
-  // Xóa khóa học
+  // Xóa khóa học và toàn bộ từ trong subcollection
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
     try {
+      // Xóa toàn bộ words
+      const wordsSnap = await getDocs(collection(db, "courses", courseId, "words"));
+      const deletePromises = wordsSnap.docs.map((d) =>
+        deleteDoc(doc(db, "courses", courseId, "words", d.id))
+      );
+      await Promise.all(deletePromises);
+
+      // Xóa document khóa học
       await deleteDoc(doc(db, "courses", courseId));
+
       alert("✅ Đã xóa khóa học!");
       fetchCourses();
     } catch (err) {
