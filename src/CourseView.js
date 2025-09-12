@@ -1,7 +1,7 @@
 // src/CourseView.js
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { collection, getDocs, query, where, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "./firebaseClient";
 
 const CourseView = () => {
@@ -13,11 +13,14 @@ const CourseView = () => {
 
   const fetchWords = async () => {
     try {
-      const q = query(collection(db, "words"), where("courseId", "==", id));
+      const q = collection(db, "courses", id, "words"); // ✅ subcollection
       const snapshot = await getDocs(q);
       const list = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
       setWords(list);
-      setLearnedCount(0); // ⚠️ sau này thay bằng dữ liệu thực tế
+
+      // ✅ tính số từ đã học (nếu có field isLearned)
+      const learned = list.filter((w) => w.isLearned).length;
+      setLearnedCount(learned);
     } catch (error) {
       console.error("Lỗi tải từ vựng:", error);
     }
@@ -33,7 +36,7 @@ const CourseView = () => {
   // Xóa từ
   const handleDeleteWord = async (wordId) => {
     if (!window.confirm("Bạn có chắc muốn xóa từ này không?")) return;
-    await deleteDoc(doc(db, "words", wordId));
+    await deleteDoc(doc(db, "courses", id, "words", wordId));
     fetchWords();
   };
 
@@ -45,7 +48,7 @@ const CourseView = () => {
 
   // Lưu sau khi sửa
   const handleSaveEdit = async () => {
-    await updateDoc(doc(db, "words", editWordId), {
+    await updateDoc(doc(db, "courses", id, "words", editWordId), {
       kanji: editData.kanji,
       kana: editData.kana,
       meaning: editData.meaning,
