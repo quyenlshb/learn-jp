@@ -1,7 +1,7 @@
-// src/LearnNew.js (fix hiển thị khi không có từ mới)
+// src/LearnNew.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
 
 const LearnNew = () => {
@@ -16,7 +16,7 @@ const LearnNew = () => {
   const [feedback, setFeedback] = useState("");
   const [showKana, setShowKana] = useState(false);
 
-  // lấy từ chưa học
+  // lấy từ chưa học (lọc bằng progress)
   useEffect(() => {
     const fetchWords = async () => {
       try {
@@ -32,7 +32,7 @@ const LearnNew = () => {
         const newWords = allWords.filter((w) => !progress.includes(w.id));
 
         if (newWords.length === 0) {
-          setStep("empty"); // không có từ mới
+          setStep("empty");
         } else {
           setWords(newWords);
           setStep("select");
@@ -46,7 +46,7 @@ const LearnNew = () => {
     fetchWords();
   }, [id]);
 
-  // tạo lựa chọn
+  // tạo 4 lựa chọn trắc nghiệm
   useEffect(() => {
     if (step === "learn" && words.length > 0) {
       generateOptions(words[currentIndex]);
@@ -75,8 +75,11 @@ const LearnNew = () => {
     window.speechSynthesis.speak(utter);
   };
 
+  // lưu tiến độ và đánh dấu đã học
   const saveProgress = async (word, isCorrect) => {
     const now = new Date();
+
+    // 1️⃣ Lưu vào progress của user
     await setDoc(
       doc(db, "users", auth.currentUser.uid, "progress", word.id),
       {
@@ -93,6 +96,11 @@ const LearnNew = () => {
       },
       { merge: true }
     );
+
+    // 2️⃣ Đánh dấu từ đã học trong subcollection words
+    await updateDoc(doc(db, "courses", id, "words", word.id), {
+      isLearned: true,
+    });
   };
 
   const handleAnswer = async (choice) => {
@@ -120,27 +128,18 @@ const LearnNew = () => {
     }, 1500);
   };
 
-  // Loading
+  // Giao diện
   if (step === "loading") {
     return <p style={{ textAlign: "center", marginTop: "50px" }}>⏳ Đang tải...</p>;
   }
 
-  // Không có từ mới
   if (step === "empty") {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
         <h2>🎉 Bạn đã học hết tất cả từ trong khóa này rồi!</h2>
         <button
           onClick={() => navigate(`/course/${id}`)}
-          style={{
-            marginTop: "20px",
-            padding: "10px 20px",
-            borderRadius: "5px",
-            border: "none",
-            background: "#2196F3",
-            color: "#fff",
-            cursor: "pointer",
-          }}
+          style={btnBack}
         >
           Quay về khóa học
         </button>
@@ -148,7 +147,6 @@ const LearnNew = () => {
     );
   }
 
-  // Bước chọn số lượng
   if (step === "select") {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
@@ -160,15 +158,7 @@ const LearnNew = () => {
               setLimit(num);
               setStep("learn");
             }}
-            style={{
-              margin: "10px",
-              padding: "10px 20px",
-              borderRadius: "5px",
-              border: "none",
-              background: "#2196F3",
-              color: "#fff",
-              cursor: "pointer",
-            }}
+            style={btnSelect}
           >
             {num} từ
           </button>
@@ -177,26 +167,15 @@ const LearnNew = () => {
     );
   }
 
-  // Bước học
   if (step === "learn") {
     const word = words[currentIndex];
-
     return (
       <div style={{ textAlign: "center", padding: "20px" }}>
         <h2>
           Học từ mới {currentIndex + 1}/{Math.min(limit, words.length)}
         </h2>
 
-        <div
-          style={{
-            margin: "30px auto",
-            padding: "40px",
-            border: "2px solid #333",
-            borderRadius: "10px",
-            width: "300px",
-            fontSize: "28px",
-          }}
-        >
+        <div style={wordBox}>
           {word.kanji || word.kana}
           {showKana && (
             <p style={{ fontSize: "20px", marginTop: "15px", color: "#555" }}>
@@ -212,21 +191,13 @@ const LearnNew = () => {
               onClick={() => handleAnswer(opt)}
               disabled={!!selected}
               style={{
-                display: "block",
-                margin: "10px auto",
-                padding: "10px 20px",
-                width: "250px",
+                ...btnOption,
                 background:
                   selected === opt
                     ? opt === word.meaning
                       ? "#4CAF50"
                       : "#f44336"
                     : "#2196F3",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontSize: "16px",
               }}
             >
               {opt}
@@ -239,7 +210,6 @@ const LearnNew = () => {
     );
   }
 
-  // Bước hoàn thành
   if (step === "done") {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
@@ -247,15 +217,7 @@ const LearnNew = () => {
         <p>Bạn đã gieo hạt thành công cho {Math.min(limit, words.length)} từ mới 🌱</p>
         <button
           onClick={() => navigate(`/course/${id}`)}
-          style={{
-            marginTop: "20px",
-            padding: "10px 20px",
-            borderRadius: "5px",
-            border: "none",
-            background: "#2196F3",
-            color: "#fff",
-            cursor: "pointer",
-          }}
+          style={btnBack}
         >
           Quay về khóa học
         </button>
@@ -264,6 +226,45 @@ const LearnNew = () => {
   }
 
   return null;
+};
+
+// styles
+const btnBack = {
+  marginTop: "20px",
+  padding: "10px 20px",
+  borderRadius: "5px",
+  border: "none",
+  background: "#2196F3",
+  color: "#fff",
+  cursor: "pointer",
+};
+const btnSelect = {
+  margin: "10px",
+  padding: "10px 20px",
+  borderRadius: "5px",
+  border: "none",
+  background: "#2196F3",
+  color: "#fff",
+  cursor: "pointer",
+};
+const wordBox = {
+  margin: "30px auto",
+  padding: "40px",
+  border: "2px solid #333",
+  borderRadius: "10px",
+  width: "300px",
+  fontSize: "28px",
+};
+const btnOption = {
+  display: "block",
+  margin: "10px auto",
+  padding: "10px 20px",
+  width: "250px",
+  color: "white",
+  border: "none",
+  borderRadius: "5px",
+  cursor: "pointer",
+  fontSize: "16px",
 };
 
 export default LearnNew;
