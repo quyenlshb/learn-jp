@@ -1,7 +1,13 @@
-// src/CourseView.js
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { collection, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "./firebaseClient";
 
 const CourseView = () => {
@@ -10,15 +16,20 @@ const CourseView = () => {
   const [learnedCount, setLearnedCount] = useState(0);
   const [editWordId, setEditWordId] = useState(null);
   const [editData, setEditData] = useState({ kanji: "", kana: "", meaning: "" });
+  const [course, setCourse] = useState(null);
 
+  // tải danh sách từ vựng
   const fetchWords = async () => {
     try {
       const q = collection(db, "courses", id, "words"); // ✅ subcollection
       const snapshot = await getDocs(q);
-      const list = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+      const list = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
       setWords(list);
 
-      // ✅ tính số từ đã học dựa vào field isLearned
+      // ✅ tính số từ đã học (nếu có field isLearned)
       const learned = list.filter((w) => w.isLearned).length;
       setLearnedCount(learned);
     } catch (error) {
@@ -26,8 +37,21 @@ const CourseView = () => {
     }
   };
 
+  // tải thông tin khóa học
+  const fetchCourseInfo = async () => {
+    try {
+      const snap = await getDoc(doc(db, "courses", id));
+      if (snap.exists()) {
+        setCourse({ id: snap.id, ...snap.data() });
+      }
+    } catch (error) {
+      console.error("Lỗi tải thông tin khóa học:", error);
+    }
+  };
+
   useEffect(() => {
     fetchWords();
+    fetchCourseInfo();
   }, [id]);
 
   const total = words.length;
@@ -43,7 +67,11 @@ const CourseView = () => {
   // Bắt đầu sửa từ
   const handleStartEdit = (word) => {
     setEditWordId(word.id);
-    setEditData({ kanji: word.kanji || "", kana: word.kana || "", meaning: word.meaning || "" });
+    setEditData({
+      kanji: word.kanji || "",
+      kana: word.kana || "",
+      meaning: word.meaning || "",
+    });
   };
 
   // Lưu sau khi sửa
@@ -57,17 +85,45 @@ const CourseView = () => {
     fetchWords();
   };
 
-  // ✅ Đánh dấu đã học
-  const handleMarkAsLearned = async (wordId) => {
-    await updateDoc(doc(db, "courses", id, "words", wordId), {
-      isLearned: true,
-    });
-    fetchWords();
+  // Toggle công khai
+  const togglePublic = async () => {
+    try {
+      await updateDoc(doc(db, "courses", id), {
+        isPublic: !course.isPublic,
+      });
+      alert(
+        course.isPublic
+          ? "🔒 Khóa học đã được đặt về riêng tư"
+          : "🌍 Khóa học đã được công khai!"
+      );
+      fetchCourseInfo();
+    } catch (err) {
+      console.error("Lỗi toggle công khai:", err);
+      alert("❌ Không thể thay đổi trạng thái công khai");
+    }
   };
 
   return (
     <div style={{ padding: "20px" }}>
       <h2>Khoá học</h2>
+
+      {/* Nút công khai */}
+      {course && (
+        <button
+          onClick={togglePublic}
+          style={{
+            marginBottom: "20px",
+            background: course.isPublic ? "#f44336" : "#4CAF50",
+            color: "white",
+            padding: "8px 12px",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          {course.isPublic ? "🔒 Đặt riêng tư" : "🌍 Công khai"}
+        </button>
+      )}
 
       {/* Thanh tiến độ */}
       <div style={{ margin: "20px 0" }}>
@@ -136,7 +192,6 @@ const CourseView = () => {
               <th style={thStyle}>Kanji</th>
               <th style={thStyle}>Kana</th>
               <th style={thStyle}>Nghĩa</th>
-              <th style={thStyle}>Trạng thái</th>
               <th style={thStyle}>Hành động</th>
             </tr>
           </thead>
@@ -149,26 +204,34 @@ const CourseView = () => {
                       <input
                         type="text"
                         value={editData.kanji}
-                        onChange={(e) => setEditData({ ...editData, kanji: e.target.value })}
+                        onChange={(e) =>
+                          setEditData({ ...editData, kanji: e.target.value })
+                        }
                       />
                     </td>
                     <td style={tdStyle}>
                       <input
                         type="text"
                         value={editData.kana}
-                        onChange={(e) => setEditData({ ...editData, kana: e.target.value })}
+                        onChange={(e) =>
+                          setEditData({ ...editData, kana: e.target.value })
+                        }
                       />
                     </td>
                     <td style={tdStyle}>
                       <input
                         type="text"
                         value={editData.meaning}
-                        onChange={(e) => setEditData({ ...editData, meaning: e.target.value })}
+                        onChange={(e) =>
+                          setEditData({ ...editData, meaning: e.target.value })
+                        }
                       />
                     </td>
-                    <td style={tdStyle}>Đang sửa...</td>
                     <td style={tdStyle}>
-                      <button onClick={handleSaveEdit} style={{ marginRight: "5px" }}>
+                      <button
+                        onClick={handleSaveEdit}
+                        style={{ marginRight: "5px" }}
+                      >
                         Lưu
                       </button>
                       <button onClick={() => setEditWordId(null)}>Hủy</button>
@@ -180,26 +243,10 @@ const CourseView = () => {
                     <td style={tdStyle}>{w.kana}</td>
                     <td style={tdStyle}>{w.meaning}</td>
                     <td style={tdStyle}>
-                      {w.isLearned ? (
-                        <span style={{ color: "green" }}>✔️ Đã học</span>
-                      ) : (
-                        <span style={{ color: "gray" }}>⏳ Chưa học</span>
-                      )}
-                    </td>
-                    <td style={tdStyle}>
-                      {!w.isLearned && (
-                        <button
-                          onClick={() => handleMarkAsLearned(w.id)}
-                          style={{
-                            marginRight: "5px",
-                            background: "#4CAF50",
-                            color: "white",
-                          }}
-                        >
-                          ✅ Đánh dấu đã học
-                        </button>
-                      )}
-                      <button onClick={() => handleStartEdit(w)} style={{ marginRight: "5px" }}>
+                      <button
+                        onClick={() => handleStartEdit(w)}
+                        style={{ marginRight: "5px" }}
+                      >
                         ✏️ Sửa
                       </button>
                       <button
@@ -226,21 +273,4 @@ const CourseView = () => {
 const btnStyle = (color) => ({
   textAlign: "center",
   padding: "15px",
-  background: color,
-  color: "#fff",
-  textDecoration: "none",
-  borderRadius: "8px",
-});
-
-const thStyle = {
-  border: "1px solid #ddd",
-  padding: "8px",
-  textAlign: "left",
-};
-
-const tdStyle = {
-  border: "1px solid #ddd",
-  padding: "8px",
-};
-
-export default CourseView;
+  background
