@@ -1,3 +1,4 @@
+// src/CourseView.js
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
@@ -273,4 +274,21 @@ const CourseView = () => {
 const btnStyle = (color) => ({
   textAlign: "center",
   padding: "15px",
-  background
+  background: color,
+  color: "#fff",
+  textDecoration: "none",
+  borderRadius: "8px",
+});
+
+const thStyle = {
+  border: "1px solid #ddd",
+  padding: "8px",
+  textAlign: "left",
+};
+
+const tdStyle = {
+  border: "1px solid #ddd",
+  padding: "8px",
+};
+
+export default CourseView;
