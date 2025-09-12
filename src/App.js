@@ -15,6 +15,7 @@ import LearnNew from "./LearnNew";
 import Review from "./Review";
 import DifficultReview from "./DifficultReview";
 import SpeedReview from "./SpeedReview";
+import Explore from "./Explore";
 
 function App() {
   const [user, loading] = useAuthState(auth);
@@ -44,6 +45,7 @@ function App() {
 <Route path="/difficult/:id" element={<DifficultReview />} />
             <Route path="/speed-review/:id" element={<div>Trang ôn tập nhanh</div>} />
              <Route path="/speed-review/:id" element={<SpeedReview />} />
+<Route path="/explore" element={<Explore />} />
 
             {/* Route mặc định */}
             <Route path="*" element={<Navigate to="/home" replace />} />
@@ -55,6 +57,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
