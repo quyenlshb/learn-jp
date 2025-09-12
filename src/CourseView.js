@@ -10,6 +10,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "./firebaseClient";
+import LeaderboardCourse from "./LeaderboardCourse"; // 👉 thêm import
 
 const CourseView = () => {
   const { id } = useParams(); // id khoá học
@@ -19,10 +20,9 @@ const CourseView = () => {
   const [editData, setEditData] = useState({ kanji: "", kana: "", meaning: "" });
   const [course, setCourse] = useState(null);
 
-  // tải danh sách từ vựng
   const fetchWords = async () => {
     try {
-      const q = collection(db, "courses", id, "words"); // ✅ subcollection
+      const q = collection(db, "courses", id, "words");
       const snapshot = await getDocs(q);
       const list = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
@@ -30,7 +30,6 @@ const CourseView = () => {
       }));
       setWords(list);
 
-      // ✅ tính số từ đã học (nếu có field isLearned)
       const learned = list.filter((w) => w.isLearned).length;
       setLearnedCount(learned);
     } catch (error) {
@@ -38,7 +37,6 @@ const CourseView = () => {
     }
   };
 
-  // tải thông tin khóa học
   const fetchCourseInfo = async () => {
     try {
       const snap = await getDoc(doc(db, "courses", id));
@@ -58,14 +56,12 @@ const CourseView = () => {
   const total = words.length;
   const progress = total > 0 ? Math.round((learnedCount / total) * 100) : 0;
 
-  // Xóa từ
   const handleDeleteWord = async (wordId) => {
     if (!window.confirm("Bạn có chắc muốn xóa từ này không?")) return;
     await deleteDoc(doc(db, "courses", id, "words", wordId));
     fetchWords();
   };
 
-  // Bắt đầu sửa từ
   const handleStartEdit = (word) => {
     setEditWordId(word.id);
     setEditData({
@@ -75,7 +71,6 @@ const CourseView = () => {
     });
   };
 
-  // Lưu sau khi sửa
   const handleSaveEdit = async () => {
     await updateDoc(doc(db, "courses", id, "words", editWordId), {
       kanji: editData.kanji,
@@ -86,7 +81,6 @@ const CourseView = () => {
     fetchWords();
   };
 
-  // Toggle công khai
   const togglePublic = async () => {
     try {
       await updateDoc(doc(db, "courses", id), {
@@ -105,172 +99,176 @@ const CourseView = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Khoá học</h2>
+    <div style={{ display: "flex", padding: "20px" }}>
+      {/* BXH bên trái */}
+      <LeaderboardCourse courseId={id} />
 
-      {/* Nút công khai */}
-      {course && (
-        <button
-          onClick={togglePublic}
-          style={{
-            marginBottom: "20px",
-            background: course.isPublic ? "#f44336" : "#4CAF50",
-            color: "white",
-            padding: "8px 12px",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          {course.isPublic ? "🔒 Đặt riêng tư" : "🌍 Công khai"}
-        </button>
-      )}
+      {/* Nội dung chính */}
+      <div style={{ flex: 1 }}>
+        <h2>Khoá học</h2>
 
-      {/* Thanh tiến độ */}
-      <div style={{ margin: "20px 0" }}>
-        <div
-          style={{
-            background: "#ddd",
-            borderRadius: "10px",
-            overflow: "hidden",
-            height: "20px",
-            width: "100%",
-          }}
-        >
-          <div
+        {course && (
+          <button
+            onClick={togglePublic}
             style={{
-              width: `${progress}%`,
-              background: "#4CAF50",
-              height: "100%",
-              textAlign: "center",
+              marginBottom: "20px",
+              background: course.isPublic ? "#f44336" : "#4CAF50",
               color: "white",
-              fontSize: "12px",
+              padding: "8px 12px",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
             }}
           >
-            {progress}%
+            {course.isPublic ? "🔒 Đặt riêng tư" : "🌍 Công khai"}
+          </button>
+        )}
+
+        {/* Thanh tiến độ */}
+        <div style={{ margin: "20px 0" }}>
+          <div
+            style={{
+              background: "#ddd",
+              borderRadius: "10px",
+              overflow: "hidden",
+              height: "20px",
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                width: `${progress}%`,
+                background: "#4CAF50",
+                height: "100%",
+                textAlign: "center",
+                color: "white",
+                fontSize: "12px",
+              }}
+            >
+              {progress}%
+            </div>
           </div>
+          <p>
+            {learnedCount} / {total} từ đã học
+          </p>
         </div>
-        <p>
-          {learnedCount} / {total} từ đã học
-        </p>
-      </div>
 
-      {/* Các lựa chọn */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "15px",
-          marginBottom: "30px",
-        }}
-      >
-        <Link to={`/learn-new/${id}`} style={btnStyle("#2196F3")}>
-          📘 Học từ mới
-        </Link>
-        <Link to={`/review/${id}`} style={btnStyle("#4CAF50")}>
-          📖 Ôn tập từ đã học
-        </Link>
-        <Link to={`/difficult/${id}`} style={btnStyle("#FF9800")}>
-          ❗ Ôn tập từ sai nhiều
-        </Link>
-        <Link to={`/speed-review/${id}`} style={btnStyle("#9C27B0")}>
-          ⚡ Ôn tập nhanh
-        </Link>
-      </div>
-
-      {/* Danh sách từ vựng */}
-      <h3>Danh sách từ vựng</h3>
-      {words.length > 0 ? (
-        <table
+        {/* Các lựa chọn */}
+        <div
           style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "10px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "15px",
+            marginBottom: "30px",
           }}
         >
-          <thead>
-            <tr style={{ background: "#f2f2f2" }}>
-              <th style={thStyle}>Kanji</th>
-              <th style={thStyle}>Kana</th>
-              <th style={thStyle}>Nghĩa</th>
-              <th style={thStyle}>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {words.map((w) => (
-              <tr key={w.id}>
-                {editWordId === w.id ? (
-                  <>
-                    <td style={tdStyle}>
-                      <input
-                        type="text"
-                        value={editData.kanji}
-                        onChange={(e) =>
-                          setEditData({ ...editData, kanji: e.target.value })
-                        }
-                      />
-                    </td>
-                    <td style={tdStyle}>
-                      <input
-                        type="text"
-                        value={editData.kana}
-                        onChange={(e) =>
-                          setEditData({ ...editData, kana: e.target.value })
-                        }
-                      />
-                    </td>
-                    <td style={tdStyle}>
-                      <input
-                        type="text"
-                        value={editData.meaning}
-                        onChange={(e) =>
-                          setEditData({ ...editData, meaning: e.target.value })
-                        }
-                      />
-                    </td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={handleSaveEdit}
-                        style={{ marginRight: "5px" }}
-                      >
-                        Lưu
-                      </button>
-                      <button onClick={() => setEditWordId(null)}>Hủy</button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td style={tdStyle}>{w.kanji || "-"}</td>
-                    <td style={tdStyle}>{w.kana}</td>
-                    <td style={tdStyle}>{w.meaning}</td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => handleStartEdit(w)}
-                        style={{ marginRight: "5px" }}
-                      >
-                        ✏️ Sửa
-                      </button>
-                      <button
-                        onClick={() => handleDeleteWord(w.id)}
-                        style={{ background: "red", color: "white" }}
-                      >
-                        🗑️ Xóa
-                      </button>
-                    </td>
-                  </>
-                )}
+          <Link to={`/learn-new/${id}`} style={btnStyle("#2196F3")}>
+            📘 Học từ mới
+          </Link>
+          <Link to={`/review/${id}`} style={btnStyle("#4CAF50")}>
+            📖 Ôn tập từ đã học
+          </Link>
+          <Link to={`/difficult/${id}`} style={btnStyle("#FF9800")}>
+            ❗ Ôn tập từ sai nhiều
+          </Link>
+          <Link to={`/speed-review/${id}`} style={btnStyle("#9C27B0")}>
+            ⚡ Ôn tập nhanh
+          </Link>
+        </div>
+
+        {/* Danh sách từ vựng */}
+        <h3>Danh sách từ vựng</h3>
+        {words.length > 0 ? (
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginTop: "10px",
+            }}
+          >
+            <thead>
+              <tr style={{ background: "#f2f2f2" }}>
+                <th style={thStyle}>Kanji</th>
+                <th style={thStyle}>Kana</th>
+                <th style={thStyle}>Nghĩa</th>
+                <th style={thStyle}>Hành động</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>Chưa có từ nào trong khoá học.</p>
-      )}
+            </thead>
+            <tbody>
+              {words.map((w) => (
+                <tr key={w.id}>
+                  {editWordId === w.id ? (
+                    <>
+                      <td style={tdStyle}>
+                        <input
+                          type="text"
+                          value={editData.kanji}
+                          onChange={(e) =>
+                            setEditData({ ...editData, kanji: e.target.value })
+                          }
+                        />
+                      </td>
+                      <td style={tdStyle}>
+                        <input
+                          type="text"
+                          value={editData.kana}
+                          onChange={(e) =>
+                            setEditData({ ...editData, kana: e.target.value })
+                          }
+                        />
+                      </td>
+                      <td style={tdStyle}>
+                        <input
+                          type="text"
+                          value={editData.meaning}
+                          onChange={(e) =>
+                            setEditData({ ...editData, meaning: e.target.value })
+                          }
+                        />
+                      </td>
+                      <td style={tdStyle}>
+                        <button
+                          onClick={handleSaveEdit}
+                          style={{ marginRight: "5px" }}
+                        >
+                          Lưu
+                        </button>
+                        <button onClick={() => setEditWordId(null)}>Hủy</button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td style={tdStyle}>{w.kanji || "-"}</td>
+                      <td style={tdStyle}>{w.kana}</td>
+                      <td style={tdStyle}>{w.meaning}</td>
+                      <td style={tdStyle}>
+                        <button
+                          onClick={() => handleStartEdit(w)}
+                          style={{ marginRight: "5px" }}
+                        >
+                          ✏️ Sửa
+                        </button>
+                        <button
+                          onClick={() => handleDeleteWord(w.id)}
+                          style={{ background: "red", color: "white" }}
+                        >
+                          🗑️ Xóa
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>Chưa có từ nào trong khoá học.</p>
+        )}
+      </div>
     </div>
   );
 };
 
-// helper style
 const btnStyle = (color) => ({
   textAlign: "center",
   padding: "15px",
