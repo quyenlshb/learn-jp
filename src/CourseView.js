@@ -18,7 +18,7 @@ const CourseView = () => {
       const list = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
       setWords(list);
 
-      // ✅ tính số từ đã học (nếu có field isLearned)
+      // ✅ tính số từ đã học dựa vào field isLearned
       const learned = list.filter((w) => w.isLearned).length;
       setLearnedCount(learned);
     } catch (error) {
@@ -54,6 +54,14 @@ const CourseView = () => {
       meaning: editData.meaning,
     });
     setEditWordId(null);
+    fetchWords();
+  };
+
+  // ✅ Đánh dấu đã học
+  const handleMarkAsLearned = async (wordId) => {
+    await updateDoc(doc(db, "courses", id, "words", wordId), {
+      isLearned: true,
+    });
     fetchWords();
   };
 
@@ -128,6 +136,7 @@ const CourseView = () => {
               <th style={thStyle}>Kanji</th>
               <th style={thStyle}>Kana</th>
               <th style={thStyle}>Nghĩa</th>
+              <th style={thStyle}>Trạng thái</th>
               <th style={thStyle}>Hành động</th>
             </tr>
           </thead>
@@ -157,6 +166,7 @@ const CourseView = () => {
                         onChange={(e) => setEditData({ ...editData, meaning: e.target.value })}
                       />
                     </td>
+                    <td style={tdStyle}>Đang sửa...</td>
                     <td style={tdStyle}>
                       <button onClick={handleSaveEdit} style={{ marginRight: "5px" }}>
                         Lưu
@@ -170,6 +180,25 @@ const CourseView = () => {
                     <td style={tdStyle}>{w.kana}</td>
                     <td style={tdStyle}>{w.meaning}</td>
                     <td style={tdStyle}>
+                      {w.isLearned ? (
+                        <span style={{ color: "green" }}>✔️ Đã học</span>
+                      ) : (
+                        <span style={{ color: "gray" }}>⏳ Chưa học</span>
+                      )}
+                    </td>
+                    <td style={tdStyle}>
+                      {!w.isLearned && (
+                        <button
+                          onClick={() => handleMarkAsLearned(w.id)}
+                          style={{
+                            marginRight: "5px",
+                            background: "#4CAF50",
+                            color: "white",
+                          }}
+                        >
+                          ✅ Đánh dấu đã học
+                        </button>
+                      )}
                       <button onClick={() => handleStartEdit(w)} style={{ marginRight: "5px" }}>
                         ✏️ Sửa
                       </button>
