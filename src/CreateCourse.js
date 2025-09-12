@@ -18,17 +18,21 @@ const CreateCourse = () => {
     }
 
     try {
-      // tạo document khóa học trong Firestore
+      // ✅ tạo document khóa học trong Firestore (mặc định isPublic = false)
       const courseRef = await addDoc(collection(db, "courses"), {
         title,
         owner: auth.currentUser.uid,
         createdAt: new Date(),
+        isPublic: false, // 🔒 mặc định riêng tư
       });
 
       const courseId = courseRef.id;
 
       // tách list từ trong textarea
-      const lines = rawWords.split("\n").map((l) => l.trim()).filter(Boolean);
+      const lines = rawWords
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
 
       for (const line of lines) {
         // Format: Kanji Kana Nghĩa
