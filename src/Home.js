@@ -9,16 +9,14 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
+import Leaderboard from "./Leaderboard"; // 👉 thêm BXH
 
 const Home = () => {
   const [myCourses, setMyCourses] = useState([]);
   const [publicCourses, setPublicCourses] = useState([]);
-  const [learningCourses, setLearningCourses] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [newName, setNewName] = useState("");
-  const [progressData, setProgressData] = useState({}); // lưu tiến độ
 
-  // Lấy tất cả khóa học
   const fetchCourses = async () => {
     try {
       const snapshot = await getDocs(collection(db, "courses"));
@@ -27,6 +25,7 @@ const Home = () => {
         ...docSnap.data(),
       }));
 
+      // Tách ra khóa học của tôi & khóa học công khai
       const mine = allCourses.filter(
         (c) => c.owner === auth.currentUser?.uid
       );
@@ -36,32 +35,6 @@ const Home = () => {
 
       setMyCourses(mine);
       setPublicCourses(publics);
-
-      // lấy khóa học đang học từ progress
-      if (auth.currentUser) {
-        const progressSnap = await getDocs(
-          collection(db, "users", auth.currentUser.uid, "progress")
-        );
-        const progress = progressSnap.docs.map((d) => d.data().courseId);
-        const uniqueCourseIds = [...new Set(progress)];
-        const learning = allCourses.filter((c) =>
-          uniqueCourseIds.includes(c.id)
-        );
-        setLearningCourses(learning);
-      }
-
-      // Lấy tiến độ cho từng khóa
-      const progressObj = {};
-      for (const c of allCourses) {
-        const wordsSnap = await getDocs(
-          collection(db, "courses", c.id, "words")
-        );
-        const words = wordsSnap.docs.map((d) => d.data());
-        const total = words.length;
-        const learned = words.filter((w) => w.isLearned).length;
-        progressObj[c.id] = { total, learned };
-      }
-      setProgressData(progressObj);
     } catch (err) {
       console.error("Lỗi lấy danh sách khoá học:", err);
     }
@@ -75,14 +48,14 @@ const Home = () => {
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
     try {
-      const wordsSnap = await getDocs(
-        collection(db, "courses", courseId, "words")
-      );
+      // Xóa toàn bộ words trong subcollection
+      const wordsSnap = await getDocs(collection(db, "courses", courseId, "words"));
       const deletePromises = wordsSnap.docs.map((d) =>
         deleteDoc(doc(db, "courses", courseId, "words", d.id))
       );
       await Promise.all(deletePromises);
 
+      // Xóa document khóa học
       await deleteDoc(doc(db, "courses", courseId));
 
       alert("✅ Đã xóa khóa học!");
@@ -111,32 +84,52 @@ const Home = () => {
     }
   };
 
-  // render list course
-  const renderCourseList = (courses, allowEdit = false) => (
-    <ul style={{ listStyle: "none", padding: 0 }}>
-      {courses.length > 0 ? (
-        courses.map((c) => {
-          const p = progressData[c.id] || { total: 0, learned: 0 };
-          const percent = p.total > 0 ? Math.round((p.learned / p.total) * 100) : 0;
+  return (
+    <div style={{ display: "flex" }}>
+      {/* BXH tổng bên trái */}
+      <Leaderboard />
 
-          return (
-            <li
-              key={c.id}
-              style={{
-                marginBottom: "15px",
-                padding: "10px",
-                border: "1px solid #ddd",
-                borderRadius: "5px",
-              }}
-            >
-              <div
+      {/* Nội dung chính */}
+      <div style={{ flex: 1, padding: "20px" }}>
+        <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>🏠 Trang chủ</h1>
+
+        <button
+          style={{
+            padding: "10px 20px",
+            marginBottom: "20px",
+            backgroundColor: "#4CAF50",
+            color: "#fff",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          <Link
+            to="/create-course"
+            style={{ color: "white", textDecoration: "none" }}
+          >
+            ➕ Tạo khoá học
+          </Link>
+        </button>
+
+        {/* Khoá học của tôi */}
+        <h3>📘 Khoá học của tôi</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {myCourses.length > 0 ? (
+            myCourses.map((c) => (
+              <li
+                key={c.id}
                 style={{
+                  marginBottom: "15px",
+                  padding: "10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                 }}
               >
-                {allowEdit && editingId === c.id ? (
+                {editingId === c.id ? (
                   <>
                     <input
                       type="text"
@@ -154,125 +147,81 @@ const Home = () => {
                   </>
                 ) : (
                   <>
+                    <Link
+                      to={`/course/${c.id}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <strong>{c.title}</strong>
+                    </Link>
                     <div>
-                      <Link
-                        to={`/course/${c.id}`}
+                      <button
+                        onClick={() => {
+                          setEditingId(c.id);
+                          setNewName(c.title);
+                        }}
                         style={{
-                          textDecoration: "none",
-                          fontWeight: "bold",
-                          fontSize: "16px",
+                          marginLeft: "10px",
+                          background: "#2196F3",
+                          color: "white",
+                          padding: "5px 8px",
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
                         }}
                       >
-                        {c.title}
-                      </Link>
-                      {!allowEdit && (
-                        <p style={{ margin: "5px 0", color: "#666" }}>
-                          👤 Người tạo: {c.owner}
-                        </p>
-                      )}
-                      <div
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCourse(c.id)}
                         style={{
-                          background: "#eee",
-                          borderRadius: "6px",
-                          overflow: "hidden",
-                          height: "10px",
-                          marginTop: "5px",
-                          width: "200px",
+                          marginLeft: "10px",
+                          background: "red",
+                          color: "white",
+                          padding: "5px 8px",
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
                         }}
                       >
-                        <div
-                          style={{
-                            width: `${percent}%`,
-                            background: "#4CAF50",
-                            height: "100%",
-                          }}
-                        ></div>
-                      </div>
-                      <p style={{ fontSize: "12px", marginTop: "3px" }}>
-                        {p.learned}/{p.total} từ
-                      </p>
+                        🗑️
+                      </button>
                     </div>
-                    {allowEdit && (
-                      <div>
-                        <button
-                          onClick={() => {
-                            setEditingId(c.id);
-                            setNewName(c.title);
-                          }}
-                          style={{
-                            marginLeft: "10px",
-                            background: "#2196F3",
-                            color: "white",
-                            padding: "5px 8px",
-                            border: "none",
-                            borderRadius: "5px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCourse(c.id)}
-                          style={{
-                            marginLeft: "10px",
-                            background: "red",
-                            color: "white",
-                            padding: "5px 8px",
-                            border: "none",
-                            borderRadius: "5px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    )}
                   </>
                 )}
-              </div>
-            </li>
-          );
-        })
-      ) : (
-        <p>Không có khoá học nào.</p>
-      )}
-    </ul>
-  );
+              </li>
+            ))
+          ) : (
+            <p>Chưa có khoá học nào.</p>
+          )}
+        </ul>
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>🏠 Trang chủ</h1>
-
-      <button
-        style={{
-          padding: "10px 20px",
-          marginBottom: "20px",
-          backgroundColor: "#4CAF50",
-          color: "#fff",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-      >
-        <Link
-          to="/create-course"
-          style={{ color: "white", textDecoration: "none" }}
-        >
-          ➕ Tạo khoá học
-        </Link>
-      </button>
-
-      {/* Khóa học đang học */}
-      <h3>📖 Khóa học đang học</h3>
-      {renderCourseList(learningCourses, false)}
-
-      {/* Khóa học của tôi */}
-      <h3>📘 Khóa học do tôi tạo</h3>
-      {renderCourseList(myCourses, true)}
-
-      {/* Khóa học công khai */}
-      <h3>🌍 Khóa học được chia sẻ từ cộng đồng</h3>
-      {renderCourseList(publicCourses, false)}
+        {/* Khoá học công khai */}
+        <h3>🌍 Khoá học được chia sẻ từ cộng đồng</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {publicCourses.length > 0 ? (
+            publicCourses.map((c) => (
+              <li
+                key={c.id}
+                style={{
+                  marginBottom: "15px",
+                  padding: "10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                }}
+              >
+                <Link to={`/course/${c.id}`} style={{ textDecoration: "none" }}>
+                  <strong>{c.title}</strong>
+                </Link>
+                <p style={{ margin: "5px 0", color: "#666" }}>
+                  👤 Người tạo: {c.owner}
+                </p>
+              </li>
+            ))
+          ) : (
+            <p>Không có khoá học công khai nào.</p>
+          )}
+        </ul>
+      </div>
     </div>
   );
 };
