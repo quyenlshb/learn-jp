@@ -1,7 +1,7 @@
 // src/DifficultReview.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
 
 const DifficultReview = () => {
@@ -27,14 +27,15 @@ const DifficultReview = () => {
         }));
 
         // lấy từ trong đúng khóa học, sai nhiều lần
-        const hardWords = allProgress.filter((w) => {
-          return w.courseId === id && (w.wrongCount || 0) >= 2;
-        });
+        const hardWords = allProgress.filter(
+          (w) => w.courseId === id && (w.wrongCount || 0) >= 2
+        );
 
         setWords(hardWords);
         setLoading(false);
       } catch (error) {
         console.error("Lỗi tải từ khó:", error);
+        setLoading(false);
       }
     };
 
@@ -71,7 +72,18 @@ const DifficultReview = () => {
 
   const updateProgress = async (word, isCorrect) => {
     const now = new Date();
+    let interval = word.intervalDays || 1;
+    let EF = word.EF || 2.0;
 
+    if (isCorrect) {
+      interval = Math.round(interval * EF);
+      EF = Math.min(EF + 0.1, 3);
+    } else {
+      interval = 1;
+      EF = Math.max(EF - 0.3, 1.3);
+    }
+
+    // 1️⃣ update progress user
     await setDoc(
       doc(db, "users", auth.currentUser.uid, "progress", word.id),
       {
@@ -79,22 +91,31 @@ const DifficultReview = () => {
         timesSeen: (word.timesSeen || 0) + 1,
         timesCorrect: (word.timesCorrect || 0) + (isCorrect ? 1 : 0),
         wrongCount: (word.wrongCount || 0) + (isCorrect ? 0 : 1),
+        intervalDays: interval,
+        EF,
         lastReviewed: now,
+        nextDue: new Date(now.getTime() + interval * 24 * 60 * 60 * 1000),
       },
       { merge: true }
     );
+
+    // 2️⃣ đánh dấu đã học trong words collection
+    await updateDoc(doc(db, "courses", id, "words", word.id), {
+      isLearned: true,
+    });
   };
 
   const handleAnswer = async (choice) => {
     setSelected(choice);
     setShowKana(true);
 
-    speakWord(words[currentIndex]);
+    const word = words[currentIndex];
+    speakWord(word);
 
-    const isCorrect = choice === words[currentIndex].meaning;
-    setFeedback(isCorrect ? "✅ Chính xác!" : `❌ Sai. Đúng: ${words[currentIndex].meaning}`);
+    const isCorrect = choice === word.meaning;
+    setFeedback(isCorrect ? "✅ Chính xác!" : `❌ Sai. Đúng: ${word.meaning}`);
 
-    await updateProgress(words[currentIndex], isCorrect);
+    await updateProgress(word, isCorrect);
 
     setTimeout(() => {
       if (currentIndex + 1 < words.length) {
