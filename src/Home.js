@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   collection,
-  query,
-  where,
   getDocs,
   deleteDoc,
   doc,
@@ -13,22 +11,29 @@ import {
 import { db, auth } from "./firebaseClient";
 
 const Home = () => {
-  const [courses, setCourses] = useState([]);
+  const [myCourses, setMyCourses] = useState([]);
+  const [publicCourses, setPublicCourses] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [newName, setNewName] = useState("");
 
   const fetchCourses = async () => {
     try {
-      const q = query(
-        collection(db, "courses"),
-        where("owner", "==", auth.currentUser.uid)
-      );
-      const snapshot = await getDocs(q);
-      const list = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
+      const snapshot = await getDocs(collection(db, "courses"));
+      const allCourses = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
       }));
-      setCourses(list);
+
+      // Tách ra khóa học của tôi & khóa học công khai
+      const mine = allCourses.filter(
+        (c) => c.owner === auth.currentUser?.uid
+      );
+      const publics = allCourses.filter(
+        (c) => c.isPublic && c.owner !== auth.currentUser?.uid
+      );
+
+      setMyCourses(mine);
+      setPublicCourses(publics);
     } catch (err) {
       console.error("Lỗi lấy danh sách khoá học:", err);
     }
@@ -42,7 +47,7 @@ const Home = () => {
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
     try {
-      // Xóa toàn bộ words
+      // Xóa toàn bộ words trong subcollection
       const wordsSnap = await getDocs(collection(db, "courses", courseId, "words"));
       const deletePromises = wordsSnap.docs.map((d) =>
         deleteDoc(doc(db, "courses", courseId, "words", d.id))
@@ -80,7 +85,7 @@ const Home = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Trang chủ</h2>
+      <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>🏠 Trang chủ</h1>
 
       <button
         style={{
@@ -98,10 +103,11 @@ const Home = () => {
         </Link>
       </button>
 
-      <h3>Danh sách khoá học</h3>
+      {/* Khóa học của tôi */}
+      <h3>📘 Khoá học của tôi</h3>
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {courses.length > 0 ? (
-          courses.map((c) => (
+        {myCourses.length > 0 ? (
+          myCourses.map((c) => (
             <li
               key={c.id}
               style={{
@@ -174,6 +180,33 @@ const Home = () => {
           ))
         ) : (
           <p>Chưa có khoá học nào.</p>
+        )}
+      </ul>
+
+      {/* Khóa học công khai */}
+      <h3>🌍 Khoá học công khai</h3>
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {publicCourses.length > 0 ? (
+          publicCourses.map((c) => (
+            <li
+              key={c.id}
+              style={{
+                marginBottom: "15px",
+                padding: "10px",
+                border: "1px solid #ddd",
+                borderRadius: "5px",
+              }}
+            >
+              <Link to={`/course/${c.id}`} style={{ textDecoration: "none" }}>
+                <strong>{c.title}</strong>
+              </Link>
+              <p style={{ margin: "5px 0", color: "#666" }}>
+                👤 Người tạo: {c.owner}
+              </p>
+            </li>
+          ))
+        ) : (
+          <p>Không có khoá học công khai nào.</p>
         )}
       </ul>
     </div>
