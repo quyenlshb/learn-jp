@@ -16,8 +16,9 @@ const Home = () => {
   const [learningCourses, setLearningCourses] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [newName, setNewName] = useState("");
+  const [progressData, setProgressData] = useState({}); // lưu tiến độ
 
-  // Lấy khóa học
+  // Lấy tất cả khóa học
   const fetchCourses = async () => {
     try {
       const snapshot = await getDocs(collection(db, "courses"));
@@ -48,6 +49,19 @@ const Home = () => {
         );
         setLearningCourses(learning);
       }
+
+      // Lấy tiến độ cho từng khóa
+      const progressObj = {};
+      for (const c of allCourses) {
+        const wordsSnap = await getDocs(
+          collection(db, "courses", c.id, "words")
+        );
+        const words = wordsSnap.docs.map((d) => d.data());
+        const total = words.length;
+        const learned = words.filter((w) => w.isLearned).length;
+        progressObj[c.id] = { total, learned };
+      }
+      setProgressData(progressObj);
     } catch (err) {
       console.error("Lỗi lấy danh sách khoá học:", err);
     }
@@ -101,89 +115,124 @@ const Home = () => {
   const renderCourseList = (courses, allowEdit = false) => (
     <ul style={{ listStyle: "none", padding: 0 }}>
       {courses.length > 0 ? (
-        courses.map((c) => (
-          <li
-            key={c.id}
-            style={{
-              marginBottom: "15px",
-              padding: "10px",
-              border: "1px solid #ddd",
-              borderRadius: "5px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            {allowEdit && editingId === c.id ? (
-              <>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  style={{ padding: "5px", marginRight: "10px" }}
-                />
-                <button
-                  onClick={() => handleUpdateCourse(c.id)}
-                  style={{ marginRight: "5px" }}
-                >
-                  Lưu
-                </button>
-                <button onClick={() => setEditingId(null)}>Hủy</button>
-              </>
-            ) : (
-              <>
-                <div>
-                  <Link
-                    to={`/course/${c.id}`}
-                    style={{ textDecoration: "none", fontWeight: "bold" }}
-                  >
-                    {c.title}
-                  </Link>
-                  {!allowEdit && (
-                    <p style={{ margin: "5px 0", color: "#666" }}>
-                      👤 Người tạo: {c.owner}
-                    </p>
-                  )}
-                </div>
-                {allowEdit && (
-                  <div>
+        courses.map((c) => {
+          const p = progressData[c.id] || { total: 0, learned: 0 };
+          const percent = p.total > 0 ? Math.round((p.learned / p.total) * 100) : 0;
+
+          return (
+            <li
+              key={c.id}
+              style={{
+                marginBottom: "15px",
+                padding: "10px",
+                border: "1px solid #ddd",
+                borderRadius: "5px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                {allowEdit && editingId === c.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      style={{ padding: "5px", marginRight: "10px" }}
+                    />
                     <button
-                      onClick={() => {
-                        setEditingId(c.id);
-                        setNewName(c.title);
-                      }}
-                      style={{
-                        marginLeft: "10px",
-                        background: "#2196F3",
-                        color: "white",
-                        padding: "5px 8px",
-                        border: "none",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                      }}
+                      onClick={() => handleUpdateCourse(c.id)}
+                      style={{ marginRight: "5px" }}
                     >
-                      ✏️
+                      Lưu
                     </button>
-                    <button
-                      onClick={() => handleDeleteCourse(c.id)}
-                      style={{
-                        marginLeft: "10px",
-                        background: "red",
-                        color: "white",
-                        padding: "5px 8px",
-                        border: "none",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                    <button onClick={() => setEditingId(null)}>Hủy</button>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <Link
+                        to={`/course/${c.id}`}
+                        style={{
+                          textDecoration: "none",
+                          fontWeight: "bold",
+                          fontSize: "16px",
+                        }}
+                      >
+                        {c.title}
+                      </Link>
+                      {!allowEdit && (
+                        <p style={{ margin: "5px 0", color: "#666" }}>
+                          👤 Người tạo: {c.owner}
+                        </p>
+                      )}
+                      <div
+                        style={{
+                          background: "#eee",
+                          borderRadius: "6px",
+                          overflow: "hidden",
+                          height: "10px",
+                          marginTop: "5px",
+                          width: "200px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${percent}%`,
+                            background: "#4CAF50",
+                            height: "100%",
+                          }}
+                        ></div>
+                      </div>
+                      <p style={{ fontSize: "12px", marginTop: "3px" }}>
+                        {p.learned}/{p.total} từ
+                      </p>
+                    </div>
+                    {allowEdit && (
+                      <div>
+                        <button
+                          onClick={() => {
+                            setEditingId(c.id);
+                            setNewName(c.title);
+                          }}
+                          style={{
+                            marginLeft: "10px",
+                            background: "#2196F3",
+                            color: "white",
+                            padding: "5px 8px",
+                            border: "none",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCourse(c.id)}
+                          style={{
+                            marginLeft: "10px",
+                            background: "red",
+                            color: "white",
+                            padding: "5px 8px",
+                            border: "none",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </li>
-        ))
+              </div>
+            </li>
+          );
+        })
       ) : (
         <p>Không có khoá học nào.</p>
       )}
