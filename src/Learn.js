@@ -164,7 +164,7 @@ const Learn = () => {
           borderRadius: 12,
         }}
       >
-        <h2 style={{ marginBottom: 20 }}>{currentWord.word}</h2>
+        <h2 style={{ marginBottom: 20 }}>{currentWord.kanji || currentWord.kana}</h2>
         {choices.map((c) => (
           <button
             key={c}
