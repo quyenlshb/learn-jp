@@ -1,114 +1,53 @@
-// src/Home.js
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import { db, auth } from "./firebaseClient";
+
+const FeatureCard = ({ title, desc, to, icon }) => (
+  <Link to={to} className="block bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transform hover:-translate-y-1 transition">
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-indigo-50">
+        {icon}
+      </div>
+      <h3 className="text-xl font-semibold text-indigo-700">{title}</h3>
+    </div>
+    <p className="mt-4 text-gray-600">{desc}</p>
+  </Link>
+);
 
 const Home = () => {
-  const [myCourses, setMyCourses] = useState([]);
-  const [publicCourses, setPublicCourses] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [newName, setNewName] = useState("");
-
-  const fetchCourses = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, "courses"));
-      const allCourses = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }));
-
-      // Tách ra khóa học của tôi & khóa học công khai
-      const mine = allCourses.filter(
-        (c) => c.owner === auth.currentUser?.uid
-      );
-      const publics = allCourses.filter(
-        (c) => c.isPublic && c.owner !== auth.currentUser?.uid
-      );
-
-      setMyCourses(mine);
-      setPublicCourses(publics);
-    } catch (err) {
-      console.error("Lỗi lấy danh sách khoá học:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  // Xóa khóa học
-  const handleDelete = async (id) => {
-    try {
-      await deleteDoc(doc(db, "courses", id));
-      fetchCourses();
-    } catch (err) {
-      console.error("Lỗi xoá khoá học:", err);
-    }
-  };
-
-  // Sửa tên khóa học
-  const handleEdit = async (id) => {
-    try {
-      await updateDoc(doc(db, "courses", id), { title: newName });
-      setEditingId(null);
-      setNewName("");
-      fetchCourses();
-    } catch (err) {
-      console.error("Lỗi sửa khoá học:", err);
-    }
-  };
-
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-slate-50 min-h-screen" style={{ padding: "20px" }}>
-      <h1>Trang chủ</h1>
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-12">
+      <div className="max-w-7xl mx-auto px-6">
+        <section className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl font-extrabold text-indigo-700 leading-tight">Học tiếng Nhật — nhanh, hiệu quả và vui vẻ</h1>
+          <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Bộ bài học tương tác, luyện tập tốc độ và hệ thống bảng xếp hạng để bạn có động lực tiến bộ mỗi ngày.</p>
+          <div className="mt-8 flex justify-center gap-4">
+            <Link to="/courses" className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700">Bắt đầu học</Link>
+            <Link to="/leaderboard" className="px-6 py-3 bg-white border border-gray-200 rounded-lg">Xem bảng xếp hạng</Link>
+          </div>
+        </section>
 
-      <h2>Khoá học của tôi</h2>
-      <ul>
-        {myCourses.map((course) => (
-          <li key={course.id}>
-            {editingId === course.id ? (
-              <>
-                <input
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                />
-                <button onClick={() => handleEdit(course.id)}>Lưu</button>
-                <button onClick={() => setEditingId(null)}>Huỷ</button>
-              </>
-            ) : (
-              <>
-                <Link to={`/course/${course.id}`}>{course.title}</Link>
-                <button onClick={() => handleDelete(course.id)}>Xoá</button>
-                <button
-                  onClick={() => {
-                    setEditingId(course.id);
-                    setNewName(course.title);
-                  }}
-                >
-                  Sửa
-                </button>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      <h2>Khoá học công khai</h2>
-      <ul>
-        {publicCourses.map((course) => (
-          <li key={course.id}>
-            <Link to={`/course/${course.id}`}>{course.title}</Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <FeatureCard
+            to="/courses"
+            title="Khóa học phong phú"
+            desc="Từ cơ bản đến nâng cao — từng bài được thiết kế ngắn, dễ nắm bắt."
+            icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l6.16-3.422A12.083 12.083 0 0118 20.5a12.083 12.083 0 01-6 0 12.083 12.083 0 01-0.16-9.922L12 14z"/></svg>}
+          />
+          <FeatureCard
+            to="/leaderboard"
+            title="Bảng xếp hạng"
+            desc="Cạnh tranh bạn bè, thu thập huy hiệu và leo bảng xếp hạng hàng ngày."
+            icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 17h2M12 3v14M5 21h14"/></svg>}
+          />
+          <FeatureCard
+            to="/learn"
+            title="Luyện tập tốc độ"
+            desc="Rèn kỹ năng phản xạ với bài kiểm tra tốc độ và ôn tập khó."
+            icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3"/></svg>}
+          />
+        </section>
+      </div>
+    </main>
   );
 };
 

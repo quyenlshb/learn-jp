@@ -1,3 +1,2 @@
-/* App.css - simplified for Tailwind */
-body { margin: 0; }
-a { text-decoration: none; }
+/* Minimal App.css — layout handled by Tailwind */
+body{margin:0}

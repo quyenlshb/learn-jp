@@ -1,56 +1,35 @@
-// src/LeaderboardCourse.js
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "./firebaseClient";
 
-const LeaderboardCourse = ({ courseId }) => {
-  const [leaders, setLeaders] = useState([]);
-
-  const fetchLeaderboard = async () => {
-    try {
-      const q = query(
-        collection(db, "courses", courseId, "scores"), // subcollection lưu điểm
-        orderBy("points", "desc"),
-        limit(10)
-      );
-      const snap = await getDocs(q);
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setLeaders(list);
-    } catch (err) {
-      console.error("Lỗi lấy BXH:", err);
-    }
-  };
+const LeaderboardCourse = () => {
+  const [rows, setRows] = useState([]);
 
   useEffect(() => {
-    if (courseId) fetchLeaderboard();
-  }, [courseId]);
+    const fetch = async () => {
+      try {
+        const q = query(collection(db, "courseLeaderboard"), orderBy("score", "desc"));
+        const snap = await getDocs(q);
+        setRows(snap.docs.map((d,i) => ({ id: d.id, rank: i+1, ...d.data() })));
+      } catch (e) { console.error(e); }
+    };
+    fetch();
+  }, []);
 
   return (
-    <div
-      style={{
-        width: "250px",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "10px",
-        marginRight: "20px",
-        background: "#fafafa",
-      }}
-    >
-      <h3 style={{ marginTop: 0 }}>🏆 BXH khóa học</h3>
-      {leaders.length > 0 ? (
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {leaders.map((u, i) => (
-            <li key={u.id} style={{ marginBottom: "8px" }}>
-              <strong>
-                {i + 1}. {u.username || u.id}
-              </strong>{" "}
-              - {u.points} điểm
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Chưa có ai trong BXH.</p>
-      )}
+    <div className="space-y-3">
+      {rows.map(r => (
+        <div key={r.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-semibold text-indigo-600">{r.rank}</div>
+            <div>
+              <div className="font-semibold">{r.name || r.userName || "Người chơi"}</div>
+              <div className="text-sm text-gray-500">{r.courseName || ""}</div>
+            </div>
+          </div>
+          <div className="text-indigo-600 font-bold text-lg">{r.score || 0}</div>
+        </div>
+      ))}
     </div>
   );
 };

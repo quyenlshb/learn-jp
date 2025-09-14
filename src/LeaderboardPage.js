@@ -4,23 +4,19 @@ import LeaderboardCourse from "./LeaderboardCourse";
 
 const LeaderboardPage = () => {
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center text-indigo-700 mb-6">Bảng xếp hạng</h1>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Bảng xếp hạng toàn hệ thống</h2>
-        <div className="bg-white rounded-2xl shadow p-4">
+    <main className="min-h-screen bg-slate-50 py-12">
+      <div className="max-w-5xl mx-auto px-6 space-y-8">
+        <h1 className="text-4xl font-extrabold text-indigo-700 text-center">Bảng xếp hạng</h1>
+        <section className="bg-white p-6 rounded-2xl shadow">
+          <h2 className="text-xl font-semibold mb-4">Top người chơi</h2>
           <Leaderboard />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Bảng xếp hạng theo khóa học</h2>
-        <div className="bg-white rounded-2xl shadow p-4">
+        </section>
+        <section className="bg-white p-6 rounded-2xl shadow">
+          <h2 className="text-xl font-semibold mb-4">Theo khóa học</h2>
           <LeaderboardCourse />
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 };
 
