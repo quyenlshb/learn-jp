@@ -1,64 +1,43 @@
-import React, { useEffect, useState } from "react";
-import { collection, query, orderBy, limit, getDocs, where } from "firebase/firestore";
-import { db } from "./firebaseClient";
+import React, { useState } from "react";
+import Leaderboard from "./Leaderboard";
+import LeaderboardCourse from "./LeaderboardCourse";
 
-const fetchTop = async (collectionName, limitCount=50) => {
-  try {
-    const q = query(collection(db, collectionName), orderBy("score", "desc"), limit(limitCount));
-    const snap = await getDocs(q);
-    return snap.docs.map((d,i) => ({ id: d.id, rank: i+1, ...d.data() }));
-  } catch (e) {
-    console.error("fetchTop error", e);
-    return [];
-  }
-};
+const Tabs = ({ active, setActive }) => (
+  <div className="inline-flex bg-white/50 rounded-xl p-1 gap-1">
+    <button onClick={() => setActive("global")} className={`px-4 py-2 rounded-lg font-medium ${active==="global" ? "bg-white shadow" : "text-gray-600"}`}>Toàn hệ thống</button>
+    <button onClick={() => setActive("course")} className={`px-4 py-2 rounded-lg font-medium ${active==="course" ? "bg-white shadow" : "text-gray-600"}`}>Theo khóa học</button>
+  </div>
+);
 
 const LeaderboardPage = () => {
-  const [tab, setTab] = useState("all");
-  const [rows, setRows] = useState([]);
-
-  useEffect(() => {
-    const load = async () => {
-      if (tab === "all") {
-        const r = await fetchTop("leaderboard", 100);
-        setRows(r);
-      } else if (tab === "weekly") {
-        const r = await fetchTop("weeklyLeaderboard", 100);
-        setRows(r);
-      } else if (tab === "monthly") {
-        const r = await fetchTop("monthlyLeaderboard", 100);
-        setRows(r);
-      }
-    };
-    load();
-  }, [tab]);
+  const [active, setActive] = useState("global");
+  const [sortBy, setSortBy] = useState("score"); // or "name"
 
   return (
     <main className="min-h-screen bg-slate-50 py-12">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-extrabold text-indigo-700">Bảng xếp hạng</h1>
-          <div className="inline-flex bg-white/50 rounded-xl p-1 gap-1">
-            <button onClick={() => setTab("all")} className={`px-4 py-2 rounded-lg font-medium ${tab==="all" ? "bg-white shadow" : "text-gray-600"}`}>Tất cả</button>
-            <button onClick={() => setTab("weekly")} className={`px-4 py-2 rounded-lg font-medium ${tab==="weekly" ? "bg-white shadow" : "text-gray-600"}`}>Tuần</button>
-            <button onClick={() => setTab("monthly")} className={`px-4 py-2 rounded-lg font-medium ${tab==="monthly" ? "bg-white shadow" : "text-gray-600"}`}>Tháng</button>
+      <div className="max-w-6xl mx-auto px-6">
+        <header className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-extrabold text-indigo-700">Bảng xếp hạng</h1>
+          <div className="flex items-center gap-4">
+            <Tabs active={active} setActive={setActive} />
+            <select value={sortBy} onChange={(e)=>setSortBy(e.target.value)} className="ml-4 px-3 py-2 border rounded-lg bg-white text-sm">
+              <option value="score">Sắp xếp: Điểm (giảm dần)</option>
+              <option value="name">Sắp xếp: Tên (A→Z)</option>
+            </select>
           </div>
-        </div>
+        </header>
 
-        <div className="space-y-3">
-          {rows.map(r => (
-            <div key={r.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-semibold text-indigo-600">{r.rank}</div>
-                <div>
-                  <div className="font-semibold">{r.name || r.uid || "Người dùng"}</div>
-                  <div className="text-sm text-gray-500">Streak: {r.streakCount || 0} • Badges: {(r.badges||[]).join(", ")}</div>
-                </div>
-              </div>
-              <div className="text-indigo-600 font-bold text-lg">{r.score||0}</div>
+        <section className="space-y-6">
+          {active==="global" ? (
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <Leaderboard sortBy={sortBy} />
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <LeaderboardCourse sortBy={sortBy} />
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
