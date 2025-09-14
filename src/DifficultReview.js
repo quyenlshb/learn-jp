@@ -2,9 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "./firebaseClient";
-import { addScore, updateStreakOnActivity } from "./firebaseHelpers";
-
+import { db, auth } from "./firebaseClient";\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";
 
 const DifficultReview = () => {
   const { id } = useParams(); // courseId
@@ -28,7 +26,7 @@ const DifficultReview = () => {
           ...d.data(),
         }));
 
-        // ly t trong ng kha hc, sai nhiu ln
+        // lấy từ trong đúng khóa học, sai nhiều lần
         const hardWords = allProgress.filter(
           (w) => w.courseId === id && (w.wrongCount || 0) >= 2
         );
@@ -36,7 +34,7 @@ const DifficultReview = () => {
         setWords(hardWords);
         setLoading(false);
       } catch (error) {
-        console.error("Li ti t kh:", error);
+        console.error("Lỗi tải từ khó:", error);
         setLoading(false);
       }
     };
@@ -85,7 +83,7 @@ const DifficultReview = () => {
       EF = Math.max(EF - 0.3, 1.3);
     }
 
-    // 1 update progress user
+    // 1️⃣ update progress user
     await setDoc(
       doc(db, "users", auth.currentUser.uid, "progress", word.id),
       {
@@ -101,7 +99,7 @@ const DifficultReview = () => {
       { merge: true }
     );
 
-    // 2 nh du  hc trong words collection
+    // 2️⃣ đánh dấu đã học trong words collection
     await updateDoc(doc(db, "courses", id, "words", word.id), {
       isLearned: true,
     });
@@ -115,7 +113,7 @@ const DifficultReview = () => {
     speakWord(word);
 
     const isCorrect = choice === word.meaning;
-    setFeedback(isCorrect ? " Chnh xc!" : ` Sai. ng: ${word.meaning}`);
+    setFeedback(isCorrect ? "✅ Chính xác!" : `❌ Sai. Đúng: ${word.meaning}`);
 
     await updateProgress(word, isCorrect);
 
@@ -123,22 +121,22 @@ const DifficultReview = () => {
       if (currentIndex + 1 < words.length) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        alert("Hon thnh n t kh!");
+        alert("Hoàn thành ôn từ khó!");
         navigate(`/course/${id}`);
       }
     }, 1500);
   };
 
-  if (loading) return <p>ang ti...</p>;
-  if (words.length === 0) return <p>Khng c t no b sai nhiu </p>;
+  if (loading) return <p>Đang tải...</p>;
+  if (words.length === 0) return <p>Không có từ nào bị sai nhiều 🎉</p>;
 
   const word = words[currentIndex];
 
   return (
     <div style={{ padding: "20px", textAlign: "center" }}>
-      <h2>n tp t kh</h2>
+      <h2>Ôn tập từ khó</h2>
       <p>
-        T {currentIndex + 1}/{words.length}
+        Từ {currentIndex + 1}/{words.length}
       </p>
 
       <div
@@ -203,7 +201,7 @@ const DifficultReview = () => {
             cursor: "pointer",
           }}
         >
-           Nghe li
+          🔊 Nghe lại
         </button>
       )}
     </div>

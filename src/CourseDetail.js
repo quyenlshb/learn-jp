@@ -1,9 +1,7 @@
 // src/CourseDetail.js
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { db } from "./firebaseClient";
-import { addScore, updateStreakOnActivity } from "./firebaseHelpers";
-
+import { db } from "./firebaseClient";\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";
 import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 
 function CourseDetail() {
@@ -13,7 +11,7 @@ function CourseDetail() {
   const [editMode, setEditMode] = useState(false);
   const [newName, setNewName] = useState("");
 
-  // Ly thng tin kha hc
+  // Lấy thông tin khóa học
   const fetchCourse = async () => {
     const snap = await getDoc(doc(db, "courses", id));
     if (snap.exists()) {
@@ -26,50 +24,50 @@ function CourseDetail() {
     fetchCourse();
   }, [id]);
 
-  // Xa kha hc (bao gm ton b words)
+  // Xóa khóa học (bao gồm toàn bộ words)
   const handleDeleteCourse = async () => {
-    if (!window.confirm("Bn c chc chn mun xa kha hc ny khng?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
     try {
-      // Xa ton b t trong subcollection
+      // Xóa toàn bộ từ trong subcollection
       const wordsSnap = await getDocs(collection(db, "courses", id, "words"));
       const deletePromises = wordsSnap.docs.map((d) =>
         deleteDoc(doc(db, "courses", id, "words", d.id))
       );
       await Promise.all(deletePromises);
 
-      // Xa document kha hc
+      // Xóa document khóa học
       await deleteDoc(doc(db, "courses", id));
 
-      alert("  xa kha hc!");
+      alert("✅ Đã xóa khóa học!");
       navigate("/home");
     } catch (err) {
-      console.error("Li khi xa:", err);
-      alert(" Xa tht bi, vui lng th li.");
+      console.error("Lỗi khi xóa:", err);
+      alert("❌ Xóa thất bại, vui lòng thử lại.");
     }
   };
 
-  // Cp nht tn kha hc
+  // Cập nhật tên khóa học
   const handleUpdateCourse = async () => {
     if (!newName.trim()) {
-      alert("Tn kha hc khng c  trng");
+      alert("Tên khóa học không được để trống");
       return;
     }
     try {
       await updateDoc(doc(db, "courses", id), { name: newName });
-      alert("  cp nht tn kha hc!");
+      alert("✅ Đã cập nhật tên khóa học!");
       setEditMode(false);
       fetchCourse();
     } catch (err) {
-      console.error("Li khi cp nht:", err);
-      alert(" Cp nht tht bi, vui lng th li.");
+      console.error("Lỗi khi cập nhật:", err);
+      alert("❌ Cập nhật thất bại, vui lòng thử lại.");
     }
   };
 
-  if (!course) return <p>ang ti...</p>;
+  if (!course) return <p>Đang tải...</p>;
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Chi tit kha hc</h2>
+      <h2>Chi tiết khóa học</h2>
 
       {editMode ? (
         <div>
@@ -80,34 +78,34 @@ function CourseDetail() {
             style={{ padding: "6px", marginRight: "10px" }}
           />
           <button onClick={handleUpdateCourse} style={{ marginRight: "5px" }}>
-            Lu
+            Lưu
           </button>
-          <button onClick={() => setEditMode(false)}>Hy</button>
+          <button onClick={() => setEditMode(false)}>Hủy</button>
         </div>
       ) : (
         <h3>
           {course.name}{" "}
           <button onClick={() => setEditMode(true)} style={{ marginLeft: "10px" }}>
-             Sa
+            ✏️ Sửa
           </button>
         </h3>
       )}
 
       <div style={{ margin: "20px 0" }}>
         <Link to={`/course/${id}/view`}>
-          <button style={{ marginRight: "10px" }}> Xem t vng</button>
+          <button style={{ marginRight: "10px" }}>📖 Xem từ vựng</button>
         </Link>
         <Link to={`/learn-new/${id}`}>
-          <button style={{ marginRight: "10px" }}> Hc t mi</button>
+          <button style={{ marginRight: "10px" }}>🆕 Học từ mới</button>
         </Link>
         <Link to={`/review/${id}`}>
-          <button style={{ marginRight: "10px" }}> n tp</button>
+          <button style={{ marginRight: "10px" }}>🔄 Ôn tập</button>
         </Link>
         <Link to={`/difficult/${id}`}>
-          <button style={{ marginRight: "10px" }}> n t kh</button>
+          <button style={{ marginRight: "10px" }}>⚡ Ôn từ khó</button>
         </Link>
         <Link to={`/speed-review/${id}`}>
-          <button> n tp nhanh</button>
+          <button>⏱️ Ôn tập nhanh</button>
         </Link>
       </div>
 
@@ -122,7 +120,7 @@ function CourseDetail() {
           cursor: "pointer",
         }}
       >
-         Xa kha hc
+        🗑️ Xóa khóa học
       </button>
     </div>
   );

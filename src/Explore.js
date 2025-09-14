@@ -14,10 +14,10 @@ const Explore = () => {
         const snap = await getDocs(q);
         const list = snap.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((c) => c.owner !== auth.currentUser?.uid); // b kha hc ca chnh mnh
+          .filter((c) => c.owner !== auth.currentUser?.uid); // bỏ khóa học của chính mình
         setCourses(list);
       } catch (err) {
-        console.error("Li ly kha hc cng khai:", err);
+        console.error("Lỗi lấy khóa học công khai:", err);
       }
     };
 
@@ -26,7 +26,7 @@ const Explore = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2> Khm ph kha hc cng khai</h2>
+      <h2>🌍 Khám phá khóa học công khai</h2>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {courses.length > 0 ? (
           courses.map((c) => (
@@ -42,11 +42,11 @@ const Explore = () => {
               <Link to={`/course/${c.id}`} style={{ textDecoration: "none", fontSize: "18px" }}>
                 <strong>{c.title || c.name}</strong>
               </Link>
-              <p style={{ margin: "5px 0" }}> Ngi to: {c.ownerName || "n danh"}</p>
+              <p style={{ margin: "5px 0" }}>👤 Người tạo: {c.ownerName || "Ẩn danh"}</p>
             </li>
           ))
         ) : (
-          <p>Khng c kha hc cng khai no.</p>
+          <p>Không có khóa học công khai nào.</p>
         )}
       </ul>
     </div>

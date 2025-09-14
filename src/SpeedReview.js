@@ -2,9 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "./firebaseClient";
-import { addScore, updateStreakOnActivity } from "./firebaseHelpers";
-
+import { db, auth } from "./firebaseClient";\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";
 
 const SpeedReview = () => {
   const { id } = useParams(); // courseId
@@ -15,22 +13,22 @@ const SpeedReview = () => {
   const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60); // 60 giy
+  const [timeLeft, setTimeLeft] = useState(60); // 60 giây
   const [gameOver, setGameOver] = useState(false);
 
-  //  Ly d liu t progress trc, nu rng th fallback sang courses
+  // 👉 Lấy dữ liệu từ progress trước, nếu rỗng thì fallback sang courses
   useEffect(() => {
     const fetchWords = async () => {
       let fetched = [];
 
-      // 1. Th ly t progress
+      // 1. Thử lấy từ progress
       const snap = await getDocs(
         collection(db, "users", auth.currentUser.uid, "progress")
       );
       const allProgress = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       fetched = allProgress.filter((w) => w.courseId === id);
 
-      // 2. Nu progress rng  fallback sang ton b t trong course
+      // 2. Nếu progress rỗng → fallback sang toàn bộ từ trong course
       if (fetched.length === 0) {
         const courseSnap = await getDocs(collection(db, "courses", id, "words"));
         fetched = courseSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -85,7 +83,7 @@ const SpeedReview = () => {
       EF = Math.max(EF - 0.2, 1.3);
     }
 
-    // 1 update progress
+    // 1️⃣ update progress
     await setDoc(
       doc(db, "users", auth.currentUser.uid, "progress", word.id),
       {
@@ -102,7 +100,7 @@ const SpeedReview = () => {
       { merge: true }
     );
 
-    // 2 nh du  hc trong course
+    // 2️⃣ đánh dấu đã học trong course
     await updateDoc(doc(db, "courses", id, "words", word.id), {
       isLearned: true,
     });
@@ -134,8 +132,8 @@ const SpeedReview = () => {
   if (gameOver) {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
-        <h2> Ht gi!</h2>
-        <p>im s ca bn: {score}</p>
+        <h2>⏱ Hết giờ!</h2>
+        <p>Điểm số của bạn: {score}</p>
         <button
           onClick={() => navigate(`/course/${id}`)}
           style={{
@@ -148,23 +146,23 @@ const SpeedReview = () => {
             cursor: "pointer",
           }}
         >
-          Quay v kha hc
+          Quay về khóa học
         </button>
       </div>
     );
   }
 
-  if (words.length === 0) return <p>Khng c t no  luyn.</p>;
+  if (words.length === 0) return <p>Không có từ nào để luyện.</p>;
 
   const word = words[currentIndex];
 
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
-      <h2>n tp nhanh</h2>
-      <p> Thi gian: {timeLeft}s</p>
-      <p> im: {score}</p>
+      <h2>Ôn tập nhanh</h2>
+      <p>⏳ Thời gian: {timeLeft}s</p>
+      <p>⭐ Điểm: {score}</p>
       <p>
-        Cu {currentIndex + 1}/{words.length}
+        Câu {currentIndex + 1}/{words.length}
       </p>
 
       <div

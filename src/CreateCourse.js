@@ -6,36 +6,36 @@ import { useNavigate } from "react-router-dom";
 
 const CreateCourse = () => {
   const [title, setTitle] = useState("");
-  const [rawWords, setRawWords] = useState(""); // nhp list t
+  const [rawWords, setRawWords] = useState(""); // nhập list từ
   const navigate = useNavigate();
 
   const handleCreateCourse = async (e) => {
     e.preventDefault();
 
     if (!title.trim()) {
-      alert(" Vui lng nhp tn kha hc");
+      alert("⚠️ Vui lòng nhập tên khóa học");
       return;
     }
 
     try {
-      //  to document kha hc trong Firestore (mc nh isPublic = false)
+      // ✅ tạo document khóa học trong Firestore (mặc định isPublic = false)
       const courseRef = await addDoc(collection(db, "courses"), {
         title,
         owner: auth.currentUser.uid,
         createdAt: new Date(),
-        isPublic: false, //  mc nh ring t
+        isPublic: false, // 🔒 mặc định riêng tư
       });
 
       const courseId = courseRef.id;
 
-      // tch list t trong textarea
+      // tách list từ trong textarea
       const lines = rawWords
         .split("\n")
         .map((l) => l.trim())
         .filter(Boolean);
 
       for (const line of lines) {
-        // Format: Kanji Kana Ngha
+        // Format: Kanji Kana Nghĩa
         const parts = line.split(/\s+/);
         if (parts.length >= 3) {
           const kanji = parts[0];
@@ -50,20 +50,20 @@ const CreateCourse = () => {
         }
       }
 
-      alert(" To kha hc thnh cng!");
+      alert("✅ Tạo khóa học thành công!");
       navigate("/home");
     } catch (err) {
-      console.error("Li to kha hc:", err);
-      alert(" C li xy ra khi to kha hc.");
+      console.error("Lỗi tạo khóa học:", err);
+      alert("❌ Có lỗi xảy ra khi tạo khóa học.");
     }
   };
 
   return (
     <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
-      <h2>To kha hc mi</h2>
+      <h2>Tạo khóa học mới</h2>
       <form onSubmit={handleCreateCourse}>
         <div style={{ marginBottom: "20px" }}>
-          <label>Tn kha hc:</label>
+          <label>Tên khóa học:</label>
           <input
             type="text"
             value={title}
@@ -80,13 +80,13 @@ const CreateCourse = () => {
 
         <div style={{ marginBottom: "20px" }}>
           <label>
-            Danh sch t (mi dng: <b>Kanji Kana Ngha</b>):
+            Danh sách từ (mỗi dòng: <b>Kanji Kana Nghĩa</b>):
           </label>
           <textarea
             rows="10"
             value={rawWords}
             onChange={(e) => setRawWords(e.target.value)}
-            placeholder={`  Ch\n  Mo\n  Nht Bn`}
+            placeholder={`犬 いぬ Chó\n猫 ねこ Mèo\n日本 にほん Nhật Bản`}
             style={{
               width: "100%",
               padding: "10px",
@@ -109,7 +109,7 @@ const CreateCourse = () => {
             cursor: "pointer",
           }}
         >
-          To kha hc
+          Tạo khóa học
         </button>
       </form>
     </div>

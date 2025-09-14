@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { auth, db } from "./firebaseClient";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import Learn from "./Learn"; //  thm phn hc t vng
+import Learn from "./Learn"; // 👈 thêm phần học từ vựng
 
 function Dashboard() {
   const [user] = useAuthState(auth);
   const [score, setScore] = useState(0);
 
-  // Ly im t Firestore khi login
+  // Lấy điểm từ Firestore khi login
   useEffect(() => {
     if (user) {
       const loadScore = async () => {
@@ -22,7 +22,7 @@ function Dashboard() {
     }
   }, [user]);
 
-  // Hm cng im khi hc ng
+  // Hàm cộng điểm khi học đúng
   const addPoint = async () => {
     if (!user) return;
     const newScore = score + 1;
@@ -33,10 +33,10 @@ function Dashboard() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Xin cho {user?.email}</h1>
-      <p>im ca bn: {score}</p>
+      <h1>Xin chào {user?.email}</h1>
+      <p>Điểm của bạn: {score}</p>
 
-      {/* Phn hc t vng */}
+      {/* Phần học từ vựng */}
       <Learn onCorrect={addPoint} />
     </div>
   );

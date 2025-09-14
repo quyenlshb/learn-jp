@@ -11,10 +11,10 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebaseClient";
 import { addScore, updateStreakOnActivity } from "./firebaseHelpers";
-import LeaderboardCourse from "./LeaderboardCourse"; //  thm import
+import LeaderboardCourse from "./LeaderboardCourse"; // 👉 thêm import
 
 const CourseView = () => {
-  const { id } = useParams(); // id kho hc
+  const { id } = useParams(); // id khoá học
   const [words, setWords] = useState([]);
   const [learnedCount, setLearnedCount] = useState(0);
   const [editWordId, setEditWordId] = useState(null);
@@ -34,7 +34,7 @@ const CourseView = () => {
       const learned = list.filter((w) => w.isLearned).length;
       setLearnedCount(learned);
     } catch (error) {
-      console.error("Li ti t vng:", error);
+      console.error("Lỗi tải từ vựng:", error);
     }
   };
 
@@ -45,7 +45,7 @@ const CourseView = () => {
         setCourse({ id: snap.id, ...snap.data() });
       }
     } catch (error) {
-      console.error("Li ti thng tin kha hc:", error);
+      console.error("Lỗi tải thông tin khóa học:", error);
     }
   };
 
@@ -58,7 +58,7 @@ const CourseView = () => {
   const progress = total > 0 ? Math.round((learnedCount / total) * 100) : 0;
 
   const handleDeleteWord = async (wordId) => {
-    if (!window.confirm("Bn c chc mun xa t ny khng?")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa từ này không?")) return;
     await deleteDoc(doc(db, "courses", id, "words", wordId));
     fetchWords();
   };
@@ -89,24 +89,24 @@ const CourseView = () => {
       });
       alert(
         course.isPublic
-          ? " Kha hc  c t v ring t"
-          : " Kha hc  c cng khai!"
+          ? "🔒 Khóa học đã được đặt về riêng tư"
+          : "🌍 Khóa học đã được công khai!"
       );
       fetchCourseInfo();
     } catch (err) {
-      console.error("Li toggle cng khai:", err);
-      alert(" Khng th thay i trng thi cng khai");
+      console.error("Lỗi toggle công khai:", err);
+      alert("❌ Không thể thay đổi trạng thái công khai");
     }
   };
 
   return (
     <div style={{ display: "flex", padding: "20px" }}>
-      {/* BXH bn tri */}
+      {/* BXH bên trái */}
       <LeaderboardCourse courseId={id} />
 
-      {/* Ni dung chnh */}
+      {/* Nội dung chính */}
       <div style={{ flex: 1 }}>
-        <h2>Kho hc</h2>
+        <h2>Khoá học</h2>
 
         {course && (
           <button
@@ -121,11 +121,11 @@ const CourseView = () => {
               cursor: "pointer",
             }}
           >
-            {course.isPublic ? " t ring t" : " Cng khai"}
+            {course.isPublic ? "🔒 Đặt riêng tư" : "🌍 Công khai"}
           </button>
         )}
 
-        {/* Thanh tin  */}
+        {/* Thanh tiến độ */}
         <div style={{ margin: "20px 0" }}>
           <div
             style={{
@@ -150,11 +150,11 @@ const CourseView = () => {
             </div>
           </div>
           <p>
-            {learnedCount} / {total} t  hc
+            {learnedCount} / {total} từ đã học
           </p>
         </div>
 
-        {/* Cc la chn */}
+        {/* Các lựa chọn */}
         <div
           style={{
             display: "grid",
@@ -164,21 +164,21 @@ const CourseView = () => {
           }}
         >
           <Link to={`/learn-new/${id}`} style={btnStyle("#2196F3")}>
-             Hc t mi
+            📘 Học từ mới
           </Link>
           <Link to={`/review/${id}`} style={btnStyle("#4CAF50")}>
-             n tp t  hc
+            📖 Ôn tập từ đã học
           </Link>
           <Link to={`/difficult/${id}`} style={btnStyle("#FF9800")}>
-             n tp t sai nhiu
+            ❗ Ôn tập từ sai nhiều
           </Link>
           <Link to={`/speed-review/${id}`} style={btnStyle("#9C27B0")}>
-             n tp nhanh
+            ⚡ Ôn tập nhanh
           </Link>
         </div>
 
-        {/* Danh sch t vng */}
-        <h3>Danh sch t vng</h3>
+        {/* Danh sách từ vựng */}
+        <h3>Danh sách từ vựng</h3>
         {words.length > 0 ? (
           <table
             style={{
@@ -191,8 +191,8 @@ const CourseView = () => {
               <tr style={{ background: "#f2f2f2" }}>
                 <th style={thStyle}>Kanji</th>
                 <th style={thStyle}>Kana</th>
-                <th style={thStyle}>Ngha</th>
-                <th style={thStyle}>Hnh ng</th>
+                <th style={thStyle}>Nghĩa</th>
+                <th style={thStyle}>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -232,9 +232,9 @@ const CourseView = () => {
                           onClick={handleSaveEdit}
                           style={{ marginRight: "5px" }}
                         >
-                          Lu
+                          Lưu
                         </button>
-                        <button onClick={() => setEditWordId(null)}>Hy</button>
+                        <button onClick={() => setEditWordId(null)}>Hủy</button>
                       </td>
                     </>
                   ) : (
@@ -247,13 +247,13 @@ const CourseView = () => {
                           onClick={() => handleStartEdit(w)}
                           style={{ marginRight: "5px" }}
                         >
-                           Sa
+                          ✏️ Sửa
                         </button>
                         <button
                           onClick={() => handleDeleteWord(w.id)}
                           style={{ background: "red", color: "white" }}
                         >
-                           Xa
+                          🗑️ Xóa
                         </button>
                       </td>
                     </>
@@ -263,7 +263,7 @@ const CourseView = () => {
             </tbody>
           </table>
         ) : (
-          <p>Cha c t no trong kho hc.</p>
+          <p>Chưa có từ nào trong khoá học.</p>
         )}
       </div>
     </div>

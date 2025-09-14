@@ -21,11 +21,11 @@ const Header = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link to="/courses" className="hover:underline">Kha hc</Link>
-          <Link to="/learn" className="hover:underline">Hc</Link>
-          <Link to="/leaderboard" className="hover:underline">Bng xp hng</Link>
+          <Link to="/courses" className="hover:underline">Khóa học</Link>
+          <Link to="/learn" className="hover:underline">Học</Link>
+          <Link to="/leaderboard" className="hover:underline">Bảng xếp hạng</Link>
           <Link to="/dashboard" className="hover:underline">Dashboard</Link>
-          <button onClick={handleLogout} className="ml-3 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md">ng xut</button>
+          <button onClick={handleLogout} className="ml-3 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md">Đăng xuất</button>
         </nav>
 
         <div className="md:hidden">

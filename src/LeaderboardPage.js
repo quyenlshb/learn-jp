@@ -33,16 +33,16 @@ const LeaderboardPage = () => {
     <main className="min-h-screen bg-slate-50 py-12">
       <div className="max-w-5xl mx-auto px-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-extrabold text-indigo-700">Bng xp hng</h1>
+          <h1 className="text-3xl font-extrabold text-indigo-700">Bảng xếp hạng</h1>
           <div className="inline-flex bg-white/50 rounded-xl p-1 gap-1">
-            <button onClick={() => setTab("all")} className={`px-4 py-2 rounded-lg font-medium ${tab==="all" ? "bg-white shadow" : "text-gray-600"}`}>Tt c</button>
-            <button onClick={() => setTab("weekly")} className={`px-4 py-2 rounded-lg font-medium ${tab==="weekly" ? "bg-white shadow" : "text-gray-600"}`}>Tun</button>
-            <button onClick={() => setTab("monthly")} className={`px-4 py-2 rounded-lg font-medium ${tab==="monthly" ? "bg-white shadow" : "text-gray-600"}`}>Thng</button>
+            <button onClick={() => setTab("all")} className={`px-4 py-2 rounded-lg font-medium ${tab==="all" ? "bg-white shadow" : "text-gray-600"}`}>Tất cả</button>
+            <button onClick={() => setTab("weekly")} className={`px-4 py-2 rounded-lg font-medium ${tab==="weekly" ? "bg-white shadow" : "text-gray-600"}`}>Tuần</button>
+            <button onClick={() => setTab("monthly")} className={`px-4 py-2 rounded-lg font-medium ${tab==="monthly" ? "bg-white shadow" : "text-gray-600"}`}>Tháng</button>
           </div>
         </div>
 
         {rows.length === 0 ? (
-          <div className="bg-white p-6 rounded-2xl shadow text-center text-gray-600">Cha c d liu im no. Hy hc th  ln bng xp hng!</div>
+          <div className="bg-white p-6 rounded-2xl shadow text-center text-gray-600">Chưa có dữ liệu điểm nào. Hãy học thử để lên bảng xếp hạng!</div>
         ) : (
           <div className="space-y-3">
             {rows.map(r => (
@@ -50,8 +50,8 @@ const LeaderboardPage = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-semibold text-indigo-600">{r.rank}</div>
                   <div>
-                    <div className="font-semibold">{r.name || r.uid || "Ngi dng"}</div>
-                    <div className="text-sm text-gray-500">Streak: {r.streakCount || 0}  Badges: {(r.badges||[]).join(", ")}</div>
+                    <div className="font-semibold">{r.name || r.uid || "Người dùng"}</div>
+                    <div className="text-sm text-gray-500">Streak: {r.streakCount || 0} • Badges: {(r.badges||[]).join(", ")}</div>
                   </div>
                 </div>
                 <div className="text-indigo-600 font-bold text-lg">{r.score||0}</div>
