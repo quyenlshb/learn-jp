@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "./firebaseClient";\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";
+import { db, auth } from "./firebaseClient";
+import { addScore, updateStreakOnActivity } from "./firebaseHelpers";
+
 
 const LearnNew = () => {
   const { id } = useParams(); // courseId
@@ -16,7 +18,7 @@ const LearnNew = () => {
   const [feedback, setFeedback] = useState("");
   const [showKana, setShowKana] = useState(false);
 
-  // lấy từ chưa học (lọc bằng progress)
+  // ly t cha hc (lc bng progress)
   useEffect(() => {
     const fetchWords = async () => {
       try {
@@ -28,7 +30,7 @@ const LearnNew = () => {
         );
         const progress = progressSnap.docs.map((d) => d.id);
 
-        // lọc từ chưa học
+        // lc t cha hc
         const newWords = allWords.filter((w) => !progress.includes(w.id));
 
         if (newWords.length === 0) {
@@ -38,7 +40,7 @@ const LearnNew = () => {
           setStep("select");
         }
       } catch (err) {
-        console.error("Lỗi tải từ mới:", err);
+        console.error("Li ti t mi:", err);
         setStep("empty");
       }
     };
@@ -46,7 +48,7 @@ const LearnNew = () => {
     fetchWords();
   }, [id]);
 
-  // tạo 4 lựa chọn trắc nghiệm
+  // to 4 la chn trc nghim
   useEffect(() => {
     if (step === "learn" && words.length > 0) {
       generateOptions(words[currentIndex]);
@@ -75,11 +77,11 @@ const LearnNew = () => {
     window.speechSynthesis.speak(utter);
   };
 
-  // lưu tiến độ và đánh dấu đã học
+  // lu tin  v nh du  hc
   const saveProgress = async (word, isCorrect) => {
     const now = new Date();
 
-    // 1️⃣ Lưu vào progress của user
+    // 1 Lu vo progress ca user
     await setDoc(
       doc(db, "users", auth.currentUser.uid, "progress", word.id),
       {
@@ -97,7 +99,7 @@ const LearnNew = () => {
       { merge: true }
     );
 
-    // 2️⃣ Đánh dấu từ đã học trong subcollection words
+    // 2 nh du t  hc trong subcollection words
     await updateDoc(doc(db, "courses", id, "words", word.id), {
       isLearned: true,
     });
@@ -113,8 +115,8 @@ const LearnNew = () => {
 
     setFeedback(
       isCorrect
-        ? "🌱 Chính xác! Hạt giống đang nảy mầm 🌿"
-        : `🥀 Sai rồi. Đáp án đúng: ${word.meaning}`
+        ? " Chnh xc! Ht ging ang ny mm "
+        : ` Sai ri. p n ng: ${word.meaning}`
     );
 
     await saveProgress(word, isCorrect);
@@ -128,20 +130,20 @@ const LearnNew = () => {
     }, 1500);
   };
 
-  // Giao diện
+  // Giao din
   if (step === "loading") {
-    return <p style={{ textAlign: "center", marginTop: "50px" }}>⏳ Đang tải...</p>;
+    return <p style={{ textAlign: "center", marginTop: "50px" }}> ang ti...</p>;
   }
 
   if (step === "empty") {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
-        <h2>🎉 Bạn đã học hết tất cả từ trong khóa này rồi!</h2>
+        <h2> Bn  hc ht tt c t trong kha ny ri!</h2>
         <button
           onClick={() => navigate(`/course/${id}`)}
           style={btnBack}
         >
-          Quay về khóa học
+          Quay v kha hc
         </button>
       </div>
     );
@@ -150,7 +152,7 @@ const LearnNew = () => {
   if (step === "select") {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
-        <h2>Chọn số lượng từ để học hôm nay</h2>
+        <h2>Chn s lng t  hc hm nay</h2>
         {[5, 10, 20].map((num) => (
           <button
             key={num}
@@ -160,7 +162,7 @@ const LearnNew = () => {
             }}
             style={btnSelect}
           >
-            {num} từ
+            {num} t
           </button>
         ))}
       </div>
@@ -172,7 +174,7 @@ const LearnNew = () => {
     return (
       <div style={{ textAlign: "center", padding: "20px" }}>
         <h2>
-          Học từ mới {currentIndex + 1}/{Math.min(limit, words.length)}
+          Hc t mi {currentIndex + 1}/{Math.min(limit, words.length)}
         </h2>
 
         <div style={wordBox}>
@@ -213,13 +215,13 @@ const LearnNew = () => {
   if (step === "done") {
     return (
       <div style={{ textAlign: "center", padding: "40px" }}>
-        <h2>🎉 Hoàn thành buổi học!</h2>
-        <p>Bạn đã gieo hạt thành công cho {Math.min(limit, words.length)} từ mới 🌱</p>
+        <h2> Hon thnh bui hc!</h2>
+        <p>Bn  gieo ht thnh cng cho {Math.min(limit, words.length)} t mi </p>
         <button
           onClick={() => navigate(`/course/${id}`)}
           style={btnBack}
         >
-          Quay về khóa học
+          Quay v kha hc
         </button>
       </div>
     );

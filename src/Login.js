@@ -1,4 +1,4 @@
-﻿// src/Login.js
+// src/Login.js
 import React, { useState } from "react";
 import { auth, googleProvider } from "./firebaseClient";
 import { 
@@ -12,7 +12,7 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // Đăng nhập bằng email
+  // ng nhp bng email
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -22,7 +22,7 @@ function Login({ onLogin }) {
     }
   };
 
-  // Đăng ký bằng email
+  // ng k bng email
   const handleRegister = async () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
@@ -32,7 +32,7 @@ function Login({ onLogin }) {
     }
   };
 
-  // Đăng nhập Google
+  // ng nhp Google
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
@@ -44,7 +44,7 @@ function Login({ onLogin }) {
 
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h2>Đăng nhập / Đăng ký</h2>
+      <h2>ng nhp / ng k</h2>
 
       <input
         type="email"
@@ -55,16 +55,16 @@ function Login({ onLogin }) {
 
       <input
         type="password"
-        placeholder="Mật khẩu"
+        placeholder="Mt khu"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       /><br /><br />
 
-      <button onClick={handleLogin}>Đăng nhập</button>
-      <button onClick={handleRegister}>Đăng ký</button>
+      <button onClick={handleLogin}>ng nhp</button>
+      <button onClick={handleRegister}>ng k</button>
       <br /><br />
 
-      <button onClick={handleGoogleLogin}>Đăng nhập với Google</button>
+      <button onClick={handleGoogleLogin}>ng nhp vi Google</button>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>

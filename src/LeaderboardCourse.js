@@ -9,7 +9,7 @@ const LeaderboardCourse = ({ courseId }) => {
   const fetchLeaderboard = async () => {
     try {
       const q = query(
-        collection(db, "courses", courseId, "scores"), // subcollection lưu điểm
+        collection(db, "courses", courseId, "scores"), // subcollection lu im
         orderBy("points", "desc"),
         limit(10)
       );
@@ -17,7 +17,7 @@ const LeaderboardCourse = ({ courseId }) => {
       const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setLeaders(list);
     } catch (err) {
-      console.error("Lỗi lấy BXH:", err);
+      console.error("Li ly BXH:", err);
     }
   };
 
@@ -36,7 +36,7 @@ const LeaderboardCourse = ({ courseId }) => {
         background: "#fafafa",
       }}
     >
-      <h3 style={{ marginTop: 0 }}>🏆 BXH khóa học</h3>
+      <h3 style={{ marginTop: 0 }}> BXH kha hc</h3>
       {leaders.length > 0 ? (
         <div className="space-y-3">{
   leaders.map((u, i) => (
@@ -44,12 +44,12 @@ const LeaderboardCourse = ({ courseId }) => {
               <strong>
                 {i + 1}. {u.username || u.id}
               </strong>{" "}
-              - {u.points} điểm
+              - {u.points} im
             </div>
           ))}
         </div>
       ) : (
-        <p>Chưa có ai trong BXH.</p>
+        <p>Cha c ai trong BXH.</p>
       )}
     </div>
   );

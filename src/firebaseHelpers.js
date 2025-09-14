@@ -5,9 +5,9 @@ import { db } from "./firebaseClient";
 
 // Badge thresholds (icon + label)
 const BADGES = [
-  { score: 100, id: "rising", label: "🌟 Rising Star" },
-  { score: 500, id: "champion", label: "🏆 Champion" },
-  { score: 1000, id: "master", label: "👑 Master" },
+  { score: 100, id: "rising", label: " Rising Star" },
+  { score: 500, id: "champion", label: " Champion" },
+  { score: 1000, id: "master", label: " Master" },
 ];
 
 function getWeekId(d = new Date()) {
@@ -66,7 +66,7 @@ export async function checkAndAwardBadges(uid) {
     if (score >= b.score && !existing.includes(b.id)) toAward.push(b.id);
   });
   if (toAward.length > 0) {
-    // map ids to labels and store as strings like "🌟 Rising Star"
+    // map ids to labels and store as strings like " Rising Star"
     const newBadges = Array.from(new Set([...(existing||[]), ...toAward.map(id => {
       const b = BADGES.find(x => x.id === id);
       return b ? b.label : id;

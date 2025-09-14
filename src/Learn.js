@@ -1,11 +1,13 @@
-﻿import React\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";, { useState, useEffect } from "react";
+﻿import React
+import { addScore, updateStreakOnActivity } from "./firebaseHelpers";, { useState, useEffect } from "react";
+
 
 const words = [
-  { kanji: "日", kana: "にち", romaji: "nichi", meaning: "ngày, mặt trời" },
-  { kanji: "本", kana: "ほん", romaji: "hon", meaning: "sách, Nhật Bản" },
-  { kanji: "水", kana: "みず", romaji: "mizu", meaning: "nước" },
-  { kanji: "食べる", kana: "たべる", romaji: "taberu", meaning: "ăn" },
-  { kanji: "行く", kana: "いく", romaji: "iku", meaning: "đi" }
+  { kanji: "", kana: "", romaji: "nichi", meaning: "ngy, mt tri" },
+  { kanji: "", kana: "", romaji: "hon", meaning: "sch, Nht Bn" },
+  { kanji: "", kana: "", romaji: "mizu", meaning: "nc" },
+  { kanji: "", kana: "", romaji: "taberu", meaning: "n" },
+  { kanji: "", kana: "", romaji: "iku", meaning: "i" }
 ];
 
 function Learn({ onCorrect }) {
@@ -17,13 +19,13 @@ function Learn({ onCorrect }) {
 
   const currentWord = words[index];
 
-  // Xử lý cho chế độ Speed Review
+  // X l cho ch  Speed Review
   useEffect(() => {
     if (mode === "speed" && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (mode === "speed" && timeLeft === 0) {
-      setFeedback(`⏰ Hết giờ! Nghĩa đúng: ${currentWord.meaning}`);
+      setFeedback(` Ht gi! Ngha ng: ${currentWord.meaning}`);
       nextWord();
     }
   }, [mode, timeLeft]);
@@ -35,19 +37,19 @@ function Learn({ onCorrect }) {
     setTimeLeft(10);
   };
 
-  // Kiểm tra câu trả lời
+  // Kim tra cu tr li
   const checkAnswer = (ans) => {
     if (ans.trim().toLowerCase() === currentWord.meaning.toLowerCase()) {
-      setFeedback("✅ Chính xác!");
+      setFeedback(" Chnh xc!");
       onCorrect();
     } else {
-      setFeedback(`❌ Sai rồi! Nghĩa đúng: ${currentWord.meaning}`);
+      setFeedback(` Sai ri! Ngha ng: ${currentWord.meaning}`);
     }
 
     setTimeout(nextWord, 1500);
   };
 
-  // Tạo lựa chọn cho Multiple Choice
+  // To la chn cho Multiple Choice
   const getOptions = () => {
     let options = [currentWord.meaning];
     while (options.length < 4) {
@@ -59,11 +61,11 @@ function Learn({ onCorrect }) {
 
   return (
     <div style={{ marginTop: "20px", border: "1px solid gray", padding: "20px" }}>
-      <h2>Học từ vựng</h2>
+      <h2>Hc t vng</h2>
 
-      {/* Chọn chế độ */}
+      {/* Chn ch  */}
       <div style={{ marginBottom: "15px" }}>
-        <button onClick={() => setMode("multiple")}>Trắc nghiệm</button>
+        <button onClick={() => setMode("multiple")}>Trc nghim</button>
         <button onClick={() => setMode("speed")}>Speed Review</button>
       </div>
 
@@ -71,7 +73,7 @@ function Learn({ onCorrect }) {
         {currentWord.kanji} ({currentWord.kana}) [{currentWord.romaji}]
       </p>
 
-      {/* Chế độ trắc nghiệm */}
+      {/* Ch  trc nghim */}
       {mode === "multiple" && (
         <div>
           {getOptions().map((opt, i) => (
@@ -86,13 +88,13 @@ function Learn({ onCorrect }) {
         </div>
       )}
 
-      {/* Chế độ Speed Review */}
+      {/* Ch  Speed Review */}
       {mode === "speed" && (
         <div>
-          <p>⏳ Thời gian còn lại: {timeLeft} giây</p>
+          <p> Thi gian cn li: {timeLeft} giy</p>
           <input
             type="text"
-            placeholder="Nhập nghĩa nhanh..."
+            placeholder="Nhp ngha nhanh..."
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             style={{ padding: "8px", width: "60%" }}
@@ -101,7 +103,7 @@ function Learn({ onCorrect }) {
             onClick={() => checkAnswer(answer)}
             style={{ marginLeft: "10px", padding: "8px 12px" }}
           >
-            Xác nhận
+            Xc nhn
           </button>
         </div>
       )}

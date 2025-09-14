@@ -14,8 +14,8 @@ const Leaderboard = ({ courseId = null }) => {
 
         const list = data.map((user) => {
           const score = courseId
-            ? (user.perCourse?.[courseId] || 0) // điểm khóa cụ thể
-            : (user.totalScore || 0);           // điểm tổng
+            ? (user.perCourse?.[courseId] || 0) // im kha c th
+            : (user.totalScore || 0);           // im tng
           return { name: user.displayName || user.id, score };
         });
 
@@ -26,7 +26,7 @@ const Leaderboard = ({ courseId = null }) => {
 
         setScores(sorted);
       } catch (err) {
-        console.error("Lỗi tải BXH:", err);
+        console.error("Li ti BXH:", err);
       }
     };
 
@@ -43,17 +43,17 @@ const Leaderboard = ({ courseId = null }) => {
       }}
     >
       <h3 style={{ marginBottom: "15px" }}>
-        🏆 {courseId ? "BXH khóa học" : "BXH tổng"}
+         {courseId ? "BXH kha hc" : "BXH tng"}
       </h3>
       <ol style={{ paddingLeft: "20px" }}>
         {scores.length > 0 ? (
           scores.map((s, i) => (
             <div key={i} style={{ marginBottom: "8px" }} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
-              👤 {s.name} — <b>{s.score}</b> điểm
+               {s.name}  <b>{s.score}</b> im
             </div>
           ))
         ) : (
-          <p>Chưa có dữ liệu</p>
+          <p>Cha c d liu</p>
         )}
       </ol>
     </aside>

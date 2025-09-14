@@ -12,7 +12,7 @@ import Learn from "./Learn";
 import CreateCourse from "./CreateCourse";
 import Home from "./Home";
 import Header from "./Header";
-import CourseView from "./CourseView"; // dùng CourseView, bỏ CourseDetail
+import CourseView from "./CourseView"; // dng CourseView, b CourseDetail
 import LearnNew from "./LearnNew";
 import Review from "./Review";
 import DifficultReview from "./DifficultReview";
@@ -23,14 +23,14 @@ import LeaderboardPage from "./LeaderboardPage";
 function App() {
   const [user, loading] = useAuthState(auth);
 
-  if (loading) return <p>Đang tải...</p>;
+  if (loading) return <p>ang ti...</p>;
 
   return (
     <Router>
       {user && <Header />}
       <Routes>
         {!user ? (
-          // Nếu chưa đăng nhập -> luôn về Login
+          // Nu cha ng nhp -> lun v Login
           <Route path="*" element={<Login />} />
         ) : (
           <>
@@ -39,19 +39,19 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/learn/:courseId" element={<Learn />} />
 
-            {/* View khoá học */}
+            {/* View kho hc */}
             <Route path="/course/:id" element={<CourseView />} />
 
-            {/* Các chế độ học */}
+            {/* Cc ch  hc */}
            <Route path="/learn-new/:id" element={<LearnNew />} />
             <Route path="/review/:id" element={<Review />} />
 <Route path="/difficult/:id" element={<DifficultReview />} />
-            <Route path="/speed-review/:id" element={<div>Trang ôn tập nhanh</div>} />
+            <Route path="/speed-review/:id" element={<div>Trang n tp nhanh</div>} />
              <Route path="/speed-review/:id" element={<SpeedReview />} />
 <Route path="/explore" element={<Explore />} />
 <Route path="/leaderboard" element={<LeaderboardPage />} />
 
-            {/* Route mặc định */}
+            {/* Route mc nh */}
             <Route path="*" element={<Navigate to="/home" replace />} />
           </>
         )}

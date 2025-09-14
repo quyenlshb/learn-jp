@@ -9,7 +9,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "./firebaseClient";
-import Leaderboard from "./Leaderboard"; // 👉 thêm BXH
+import Leaderboard from "./Leaderboard"; //  thm BXH
 
 const Home = () => {
   const [myCourses, setMyCourses] = useState([]);
@@ -25,7 +25,7 @@ const Home = () => {
         ...docSnap.data(),
       }));
 
-      // Tách ra khóa học của tôi & khóa học công khai
+      // Tch ra kha hc ca ti & kha hc cng khai
       const mine = allCourses.filter(
         (c) => c.owner === auth.currentUser?.uid
       );
@@ -36,7 +36,7 @@ const Home = () => {
       setMyCourses(mine);
       setPublicCourses(publics);
     } catch (err) {
-      console.error("Lỗi lấy danh sách khoá học:", err);
+      console.error("Li ly danh sch kho hc:", err);
     }
   };
 
@@ -44,43 +44,43 @@ const Home = () => {
     fetchCourses();
   }, []);
 
-  // Xóa khóa học và toàn bộ từ trong subcollection
+  // Xa kha hc v ton b t trong subcollection
   const handleDeleteCourse = async (courseId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
+    if (!window.confirm("Bn c chc chn mun xa kha hc ny khng?")) return;
     try {
-      // Xóa toàn bộ words trong subcollection
+      // Xa ton b words trong subcollection
       const wordsSnap = await getDocs(collection(db, "courses", courseId, "words"));
       const deletePromises = wordsSnap.docs.map((d) =>
         deleteDoc(doc(db, "courses", courseId, "words", d.id))
       );
       await Promise.all(deletePromises);
 
-      // Xóa document khóa học
+      // Xa document kha hc
       await deleteDoc(doc(db, "courses", courseId));
 
-      alert("✅ Đã xóa khóa học!");
+      alert("  xa kha hc!");
       fetchCourses();
     } catch (err) {
-      console.error("Lỗi khi xóa:", err);
-      alert("❌ Xóa thất bại, vui lòng thử lại.");
+      console.error("Li khi xa:", err);
+      alert(" Xa tht bi, vui lng th li.");
     }
   };
 
-  // Cập nhật tên khóa học
+  // Cp nht tn kha hc
   const handleUpdateCourse = async (courseId) => {
     if (!newName.trim()) {
-      alert("Tên khóa học không được để trống");
+      alert("Tn kha hc khng c  trng");
       return;
     }
     try {
       await updateDoc(doc(db, "courses", courseId), { title: newName });
-      alert("✅ Đã cập nhật tên khóa học!");
+      alert("  cp nht tn kha hc!");
       setEditingId(null);
       setNewName("");
       fetchCourses();
     } catch (err) {
-      console.error("Lỗi khi cập nhật:", err);
-      alert("❌ Cập nhật thất bại, vui lòng thử lại.");
+      console.error("Li khi cp nht:", err);
+      alert(" Cp nht tht bi, vui lng th li.");
     }
   };
 
@@ -88,12 +88,12 @@ const Home = () => {
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-12">
       <div className="max-w-7xl mx-auto px-6">
         <div style={{ display: "flex" }}>
-      {/* BXH tổng bên trái */}
+      {/* BXH tng bn tri */}
       
 
-      {/* Nội dung chính */}
+      {/* Ni dung chnh */}
       <div style={{ flex: 1, padding: "20px" }}>
-        <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>🏠 Trang chủ</h1>
+        <h1 style={{ fontSize: "28px", marginBottom: "20px" }}> Trang ch</h1>
 
         <button
           style={{
@@ -110,12 +110,12 @@ const Home = () => {
             to="/create-course"
             style={{ color: "white", textDecoration: "none" }}
           >
-            ➕ Tạo khoá học
+             To kho hc
           </Link>
         </button>
 
-        {/* Khoá học của tôi */}
-        <h3>📘 Khoá học của tôi</h3>
+        {/* Kho hc ca ti */}
+        <h3> Kho hc ca ti</h3>
         <ul style={{ listStyle: "none", padding: 0 }}>
           {myCourses.length > 0 ? (
             myCourses.map((c) => (
@@ -143,9 +143,9 @@ const Home = () => {
                       onClick={() => handleUpdateCourse(c.id)}
                       style={{ marginRight: "5px" }}
                     >
-                      Lưu
+                      Lu
                     </button>
-                    <button onClick={() => setEditingId(null)}>Hủy</button>
+                    <button onClick={() => setEditingId(null)}>Hy</button>
                   </>
                 ) : (
                   <>
@@ -171,7 +171,7 @@ const Home = () => {
                           cursor: "pointer",
                         }}
                       >
-                        ✏️
+                        
                       </button>
                       <button
                         onClick={() => handleDeleteCourse(c.id)}
@@ -185,7 +185,7 @@ const Home = () => {
                           cursor: "pointer",
                         }}
                       >
-                        🗑️
+                        
                       </button>
                     </div>
                   </>
@@ -193,12 +193,12 @@ const Home = () => {
               </li>
             ))
           ) : (
-            <p>Chưa có khoá học nào.</p>
+            <p>Cha c kho hc no.</p>
           )}
         </ul>
 
-        {/* Khoá học công khai */}
-        <h3>🌍 Khoá học được chia sẻ từ cộng đồng</h3>
+        {/* Kho hc cng khai */}
+        <h3> Kho hc c chia s t cng ng</h3>
         <ul style={{ listStyle: "none", padding: 0 }}>
           {publicCourses.length > 0 ? (
             publicCourses.map((c) => (
@@ -215,12 +215,12 @@ const Home = () => {
                   <strong>{c.title}</strong>
                 </Link>
                 <p style={{ margin: "5px 0", color: "#666" }}>
-                  👤 Người tạo: {c.owner}
+                   Ngi to: {c.owner}
                 </p>
               </li>
             ))
           ) : (
-            <p>Không có khoá học công khai nào.</p>
+            <p>Khng c kho hc cng khai no.</p>
           )}
         </ul>
       </div>

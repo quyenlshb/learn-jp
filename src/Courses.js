@@ -1,4 +1,4 @@
-﻿// src/Courses.js
+// src/Courses.js
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
@@ -11,7 +11,7 @@ const Courses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // Lấy danh sách courses từ Firestore (collection "courses")
+        // Ly danh sch courses t Firestore (collection "courses")
         const querySnapshot = await getDocs(collection(db, "courses"));
         const courseList = [];
         querySnapshot.forEach((doc) => {
@@ -28,7 +28,7 @@ const Courses = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Chọn khoá học</h2>
+      <h2>Chn kho hc</h2>
       <ul>
         {courses.length > 0 ? (
           courses.map((course) => (
@@ -42,11 +42,11 @@ const Courses = () => {
               }}
               onClick={() = className="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition flex flex-col"> navigate(`/learn/${course.id}`)}
             >
-              {course.title || "Khoá học không tên"}
+              {course.title || "Kho hc khng tn"}
             </div>
           ))
         ) : (
-          <p>Chưa có khoá học nào.</p>
+          <p>Cha c kho hc no.</p>
         )}
       </ul>
       <button
@@ -61,7 +61,7 @@ const Courses = () => {
         }}
         onClick={() => navigate("/create-course")}
       >
-        ➕ Tạo bộ từ mới
+         To b t mi
       </button>
     </div>
   );
