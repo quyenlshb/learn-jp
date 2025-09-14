@@ -121,4 +121,32 @@ const CourseView = () => {
                     setEditData({ ...editData, meaning: e.target.value })
                   }
                 />
+                <button onClick={() => handleUpdateWord(w.id)}>Lưu</button>
+                <button onClick={() => setEditWordId(null)}>Huỷ</button>
+              </>
+            ) : (
+              <>
+                {w.kanji} ({w.kana}) - {w.meaning}
                 <button
+                  onClick={() => {
+                    setEditWordId(w.id);
+                    setEditData({
+                      kanji: w.kanji,
+                      kana: w.kana,
+                      meaning: w.meaning,
+                    });
+                  }}
+                >
+                  Sửa
+                </button>
+                <button onClick={() => handleDeleteWord(w.id)}>Xoá</button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default CourseView;
