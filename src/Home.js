@@ -1,51 +1,230 @@
-import React from "react";
+// src/Home.js
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const FeatureCard = ({ title, desc, to, icon }) => (
-  <Link to={to} className="block bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transform hover:-translate-y-1 transition">
-    <div className="flex items-center gap-4">
-      <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-indigo-50">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold text-indigo-700">{title}</h3>
-    </div>
-    <p className="mt-4 text-gray-600">{desc}</p>
-  </Link>
-);
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { db, auth } from "./firebaseClient";
+import Leaderboard from "./Leaderboard"; // 👉 thêm BXH
 
 const Home = () => {
+  const [myCourses, setMyCourses] = useState([]);
+  const [publicCourses, setPublicCourses] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [newName, setNewName] = useState("");
+
+  const fetchCourses = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "courses"));
+      const allCourses = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      // Tách ra khóa học của tôi & khóa học công khai
+      const mine = allCourses.filter(
+        (c) => c.owner === auth.currentUser?.uid
+      );
+      const publics = allCourses.filter(
+        (c) => c.isPublic && c.owner !== auth.currentUser?.uid
+      );
+
+      setMyCourses(mine);
+      setPublicCourses(publics);
+    } catch (err) {
+      console.error("Lỗi lấy danh sách khoá học:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  // Xóa khóa học và toàn bộ từ trong subcollection
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
+    try {
+      // Xóa toàn bộ words trong subcollection
+      const wordsSnap = await getDocs(collection(db, "courses", courseId, "words"));
+      const deletePromises = wordsSnap.docs.map((d) =>
+        deleteDoc(doc(db, "courses", courseId, "words", d.id))
+      );
+      await Promise.all(deletePromises);
+
+      // Xóa document khóa học
+      await deleteDoc(doc(db, "courses", courseId));
+
+      alert("✅ Đã xóa khóa học!");
+      fetchCourses();
+    } catch (err) {
+      console.error("Lỗi khi xóa:", err);
+      alert("❌ Xóa thất bại, vui lòng thử lại.");
+    }
+  };
+
+  // Cập nhật tên khóa học
+  const handleUpdateCourse = async (courseId) => {
+    if (!newName.trim()) {
+      alert("Tên khóa học không được để trống");
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "courses", courseId), { title: newName });
+      alert("✅ Đã cập nhật tên khóa học!");
+      setEditingId(null);
+      setNewName("");
+      fetchCourses();
+    } catch (err) {
+      console.error("Lỗi khi cập nhật:", err);
+      alert("❌ Cập nhật thất bại, vui lòng thử lại.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-12">
       <div className="max-w-7xl mx-auto px-6">
-        <section className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-indigo-700 leading-tight">Học tiếng Nhật — nhanh, hiệu quả và vui vẻ</h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Bộ bài học tương tác, luyện tập tốc độ và hệ thống bảng xếp hạng để bạn có động lực tiến bộ mỗi ngày.</p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Link to="/courses" className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700">Bắt đầu học</Link>
-            <Link to="/leaderboard" className="px-6 py-3 bg-white border border-gray-200 rounded-lg">Xem bảng xếp hạng</Link>
-          </div>
-        </section>
+        <div style={{ display: "flex" }}>
+      {/* BXH tổng bên trái */}
+      <Leaderboard />
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <FeatureCard
-            to="/courses"
-            title="Khóa học phong phú"
-            desc="Từ cơ bản đến nâng cao — từng bài được thiết kế ngắn, dễ nắm bắt."
-            icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l6.16-3.422A12.083 12.083 0 0118 20.5a12.083 12.083 0 01-6 0 12.083 12.083 0 01-0.16-9.922L12 14z"/></svg>}
-          />
-          <FeatureCard
-            to="/leaderboard"
-            title="Bảng xếp hạng"
-            desc="Cạnh tranh bạn bè, thu thập huy hiệu và leo bảng xếp hạng hàng ngày."
-            icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 17h2M12 3v14M5 21h14"/></svg>}
-          />
-          <FeatureCard
-            to="/learn"
-            title="Luyện tập tốc độ"
-            desc="Rèn kỹ năng phản xạ với bài kiểm tra tốc độ và ôn tập khó."
-            icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3"/></svg>}
-          />
-        </section>
+      {/* Nội dung chính */}
+      <div style={{ flex: 1, padding: "20px" }}>
+        <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>🏠 Trang chủ</h1>
+
+        <button
+          style={{
+            padding: "10px 20px",
+            marginBottom: "20px",
+            backgroundColor: "#4CAF50",
+            color: "#fff",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          <Link
+            to="/create-course"
+            style={{ color: "white", textDecoration: "none" }}
+          >
+            ➕ Tạo khoá học
+          </Link>
+        </button>
+
+        {/* Khoá học của tôi */}
+        <h3>📘 Khoá học của tôi</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {myCourses.length > 0 ? (
+            myCourses.map((c) => (
+              <li
+                key={c.id}
+                style={{
+                  marginBottom: "15px",
+                  padding: "10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                {editingId === c.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      style={{ padding: "5px", marginRight: "10px" }}
+                    />
+                    <button
+                      onClick={() => handleUpdateCourse(c.id)}
+                      style={{ marginRight: "5px" }}
+                    >
+                      Lưu
+                    </button>
+                    <button onClick={() => setEditingId(null)}>Hủy</button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to={`/course/${c.id}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <strong>{c.title}</strong>
+                    </Link>
+                    <div>
+                      <button
+                        onClick={() => {
+                          setEditingId(c.id);
+                          setNewName(c.title);
+                        }}
+                        style={{
+                          marginLeft: "10px",
+                          background: "#2196F3",
+                          color: "white",
+                          padding: "5px 8px",
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCourse(c.id)}
+                        style={{
+                          marginLeft: "10px",
+                          background: "red",
+                          color: "white",
+                          padding: "5px 8px",
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </>
+                )}
+              </li>
+            ))
+          ) : (
+            <p>Chưa có khoá học nào.</p>
+          )}
+        </ul>
+
+        {/* Khoá học công khai */}
+        <h3>🌍 Khoá học được chia sẻ từ cộng đồng</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {publicCourses.length > 0 ? (
+            publicCourses.map((c) => (
+              <li
+                key={c.id}
+                style={{
+                  marginBottom: "15px",
+                  padding: "10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                }}
+              >
+                <Link to={`/course/${c.id}`} style={{ textDecoration: "none" }}>
+                  <strong>{c.title}</strong>
+                </Link>
+                <p style={{ margin: "5px 0", color: "#666" }}>
+                  👤 Người tạo: {c.owner}
+                </p>
+              </li>
+            ))
+          ) : (
+            <p>Không có khoá học công khai nào.</p>
+          )}
+        </ul>
+      </div>
+    </div>
       </div>
     </main>
   );

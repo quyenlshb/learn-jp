@@ -1,45 +1,62 @@
+// src/Leaderboard.js
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "./firebaseClient";
 
-const Badge = ({ rank }) => {
-  const styles = {
-    1: "bg-yellow-400 text-white",
-    2: "bg-slate-300 text-gray-800",
-    3: "bg-amber-700 text-white",
-  };
-  return <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${styles[rank] || "bg-gray-200"}`}>{rank}</div>;
-};
-
-const Leaderboard = () => {
-  const [rows, setRows] = useState([]);
+const Leaderboard = ({ courseId = null }) => {
+  const [scores, setScores] = useState([]);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchLeaderboard = async () => {
       try {
-        const q = query(collection(db, "users"), orderBy("score", "desc"), limit(50));
-        const snap = await getDocs(q);
-        setRows(snap.docs.map((d,i) => ({ id: d.id, rank: i+1, ...d.data() })));
-      } catch (e) { console.error(e); }
+        const snap = await getDocs(collection(db, "users"));
+        const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+        const list = data.map((user) => {
+          const score = courseId
+            ? (user.perCourse?.[courseId] || 0) // điểm khóa cụ thể
+            : (user.totalScore || 0);           // điểm tổng
+          return { name: user.displayName || user.id, score };
+        });
+
+        const sorted = list
+          .filter((u) => u.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 10); // top 10
+
+        setScores(sorted);
+      } catch (err) {
+        console.error("Lỗi tải BXH:", err);
+      }
     };
-    fetch();
-  }, []);
+
+    fetchLeaderboard();
+  }, [courseId]);
 
   return (
-    <div className="space-y-3">
-      {rows.map(r => (
-        <div key={r.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Badge rank={r.rank} />
-            <div>
-              <div className="font-semibold">{r.displayName || r.email || "Người dùng"}</div>
-              <div className="text-sm text-gray-500">Level {r.level || 1}</div>
+    <aside
+      style={{
+        width: "250px",
+        borderRight: "1px solid #ddd",
+        padding: "15px",
+        background: "#fafafa",
+      }}
+    >
+      <h3 style={{ marginBottom: "15px" }}>
+        🏆 {courseId ? "BXH khóa học" : "BXH tổng"}
+      </h3>
+      <ol style={{ paddingLeft: "20px" }}>
+        {scores.length > 0 ? (
+          scores.map((s, i) => (
+            <div key={i} style={{ marginBottom: "8px" }} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
+              👤 {s.name} — <b>{s.score}</b> điểm
             </div>
-          </div>
-          <div className="text-indigo-600 font-bold text-lg">{r.score || 0}</div>
-        </div>
-      ))}
-    </div>
+          ))
+        ) : (
+          <p>Chưa có dữ liệu</p>
+        )}
+      </ol>
+    </aside>
   );
 };
 
