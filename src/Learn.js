@@ -128,7 +128,7 @@ const Learn = () => {
     return (
       <div style={{ textAlign: "center", marginTop: "40px" }}>
         <p>Không còn từ mới để học.</p>
-        <button onClick={() => navigate(-1)}>Quay lại</button>
+        <p>Bộ từ này đã học xong 🎉</p>
       </div>
     );
 
