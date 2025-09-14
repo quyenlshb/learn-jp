@@ -231,6 +231,7 @@ const Home = () => {
             <p>Không có khoá học công khai nào.</p>
           )}
         </ul>
+    </div>
     </main>
   );
 };
