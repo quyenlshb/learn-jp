@@ -13,7 +13,7 @@ import { db } from "./firebaseClient";
 import LeaderboardCourse from "./LeaderboardCourse"; // 👉 thêm import
 
 const CourseView = () => {
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [isLeaderboardVisible, setShowLeaderboard] = useState(false);
 
   const { id } = useParams(); // id khoá học
   const [words, setWords] = useState([]);
@@ -100,16 +100,16 @@ const CourseView = () => {
     }
   };
 
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [isLeaderboardVisible, setShowLeaderboard] = useState(false);
 
   return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <button
-            onClick={() => setShowLeaderboard(!showLeaderboard)}
+            onClick={() => setShowLeaderboard(!isLeaderboardVisible)}
             className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
-            {showLeaderboard ? "Ẩn bảng xếp hạng" : "Hiện bảng xếp hạng"}
+            {isLeaderboardVisible ? "Ẩn bảng xếp hạng" : "Hiện bảng xếp hạng"}
           </button>
           {/* Nội dung khóa học */}
           
@@ -292,7 +292,7 @@ const btnStyle = (color) => ({
   borderRadius: "8px",
 }
         </div>
-        {showLeaderboard && (
+        {isLeaderboardVisible && (
           <div className="lg:col-span-1">
             <div className="bg-white p-4 rounded-xl shadow">
               <h2 className="text-xl font-bold mb-3">Bảng xếp hạng khóa học</h2>

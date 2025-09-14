@@ -163,14 +163,10 @@ const Home = () => {
                       <button
                         onClick={() => {
                           setEditingId(c.id);
-        </div>
         <div className="lg:col-span-1">
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="text-xl font-bold mb-3">Bảng xếp hạng</h2>
             <Leaderboard />
-          </div>
-        </div>
-      </div>
     );
                           setNewName(c.title);
                         }}
@@ -200,7 +196,6 @@ const Home = () => {
                       >
                         🗑️
                       </button>
-                    </div>
                   </>
                 )}
               </li>
@@ -236,9 +231,6 @@ const Home = () => {
             <p>Không có khoá học công khai nào.</p>
           )}
         </ul>
-      </div>
-    </div>
-      </div>
     </main>
   );
 };
