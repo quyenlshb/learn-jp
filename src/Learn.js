@@ -250,17 +250,18 @@ const Learn = () => {
           {currentWord.kanji || currentWord.kana}
         </div>
 
-        {showKana && (
-          <p style={{ fontSize: 20, marginTop: 10, color: "#555" }}>
-            {currentWord.kana ? `${currentWord.kana} · ${currentWord.romaji || ""}` : (currentWord.romaji || "")}
-          </p>
-        )}
-
-        {!showKana && (
-          <p style={{ marginTop: 12, color: "#777" }}>
-            (Nhấn 1 lựa chọn để hiện âm/kana và xem kết quả)
-          </p>
-        )}
+        {/* reserve fixed space for kana/romaji or hint to avoid box reflow */}
+        <div style={{ height: 36, marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+          {showKana ? (
+            <p style={{ fontSize: 20, margin: 0, color: "#555", textAlign: "center", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {currentWord.kana ? `${currentWord.kana} · ${currentWord.romaji || ""}` : (currentWord.romaji || "")}
+            </p>
+          ) : (
+            <p style={{ margin: 0, color: "#777", textAlign: "center", width: "100%" }}>
+              (Nhấn 1 lựa chọn để hiện âm/kana và xem kết quả)
+            </p>
+          )}
+        </div>
       </div>
 
       <div style={{ marginTop: 10 }}>
