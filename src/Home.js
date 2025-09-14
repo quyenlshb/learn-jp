@@ -85,10 +85,6 @@ const Home = () => {
   };
 
   return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Nội dung chính */}
-          <div>{/* Giữ nguyên phần nội dung cũ */}
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-12">
       <div className="max-w-7xl mx-auto px-6">
         <div style={{ display: "flex" }}>
@@ -162,16 +158,7 @@ const Home = () => {
                     <div>
                       <button
                         onClick={() => {
-                          setEditingId(c.id</div>
-        </div>
-        <div className="lg:col-span-1">
-          <div className="bg-white p-4 rounded-xl shadow">
-            <h2 className="text-xl font-bold mb-3">Bảng xếp hạng</h2>
-            <Leaderboard />
-          </div>
-        </div>
-      </div>
-    );
+                          setEditingId(c.id);
                           setNewName(c.title);
                         }}
                         style={{
