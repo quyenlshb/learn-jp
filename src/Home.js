@@ -162,7 +162,7 @@ const Home = () => {
                     <div>
                       <button
                         onClick={() => {
-                          setEditingId(c.id</div>
+                          setEditingId(c.id);
         </div>
         <div className="lg:col-span-1">
           <div className="bg-white p-4 rounded-xl shadow">
