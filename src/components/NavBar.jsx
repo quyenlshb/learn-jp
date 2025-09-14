@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { auth } from '../firebaseClient';
+import { auth } from '../firebaseClient.js';
 
 export default function NavBar({user, onLogout}){
   return (<nav className='nav'>

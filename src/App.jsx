@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from './firebaseClient';
+import { auth, db } from './firebaseClient.js';
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 import ResetPassword from './Auth/ResetPassword';

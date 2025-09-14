@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import { markLessonCompleted } from '../services/progressService';
 import { doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '../firebaseClient';
+import { db } from '../firebaseClient.js';
 import { getAuth } from 'firebase/auth';
 
 export default function MarkCompleteButton({courseId, lessonId}){

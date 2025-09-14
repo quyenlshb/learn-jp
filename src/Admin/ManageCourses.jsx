@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebaseClient';
+import { db } from '../firebaseClient.js';
 
 export default function ManageCourses(){
   const [courses, setCourses] = useState([]);

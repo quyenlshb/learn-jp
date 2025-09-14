@@ -1,5 +1,5 @@
 import { doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '../firebaseClient';
+import { db } from '../firebaseClient.js';
 
 export async function markLessonCompleted(userId, courseId, lessonId){
   const id = `${userId}_${courseId}`;

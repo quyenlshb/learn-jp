@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebaseClient';
+import { db } from '../firebaseClient.js';
 
 export default function useProgress(userId, courseId){
   const [progress, setProgress] = useState(null);

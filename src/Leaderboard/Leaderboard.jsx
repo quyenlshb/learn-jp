@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseClient';
+import { db } from '../firebaseClient.js';
 
 export default function Leaderboard(){
   const [top, setTop] = useState([]);
