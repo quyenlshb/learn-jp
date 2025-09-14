@@ -1,77 +1,61 @@
 // firebaseHelpers.js
 // Utilities to manage leaderboard, streaks and badges in Firestore
-import { doc, setDoc, updateDoc, getDoc, serverTimestamp, increment } from "firebase/firestore";
+import { doc, setDoc, updateDoc, getDoc, serverTimestamp, increment, collection, writeBatch } from "firebase/firestore";
 import { db } from "./firebaseClient";
 
-// Badge thresholds (icon + label)
-const BADGES = [
-  { score: 100, id: "rising", label: "🌟 Rising Star" },
-  { score: 500, id: "champion", label: "🏆 Champion" },
-  { score: 1000, id: "master", label: "👑 Master" },
+// Badge thresholds
+const BADGE_THRESHOLDS = [
+  {score: 100, id: "newbie", label: "Newbie"},
+  {score: 500, id: "pro", label: "Pro Learner"},
+  {score: 1000, id: "master", label: "Master"}
 ];
 
-function getWeekId(d = new Date()) {
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const week = Math.ceil((d.getUTCDate()) / 7);
-  return `${year}-W${week}`;
-}
-function getMonthId(d = new Date()) {
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-export async function addScore(uid, name, points = 0) {
+export async function addScore(uid, name, points) {
   if (!uid) return;
   const userRef = doc(db, "leaderboard", uid);
   const snap = await getDoc(userRef);
   if (!snap.exists()) {
-    await setDoc(userRef, { uid, name: name || "", score: points || 0, badges: [], streakCount: 0, lastActiveDate: null, updatedAt: serverTimestamp() });
+    // create initial doc
+    await setDoc(userRef, { name: name || "", score: points || 0, badges: [], streakCount: 0, lastActive: serverTimestamp() });
   } else {
-    await updateDoc(userRef, { score: increment(points || 0), updatedAt: serverTimestamp() });
+    // increment score and update lastActive
+    await updateDoc(userRef, { score: increment(points || 0), lastActive: serverTimestamp() });
   }
-
-  // weekly and monthly collections (doc id per user+period)
+  // Also update weekly and monthly leaderboards (simple increment using separate collections)
   try {
     const now = new Date();
-    const weekId = getWeekId(now);
-    const monthId = getMonthId(now);
+    const weekId = `${now.getUTCFullYear()}-W${getWeekNumber(now)}`;
+    const monthId = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,"0")}`;
     const weekRef = doc(db, "weeklyLeaderboard", uid + "_" + weekId);
     const monthRef = doc(db, "monthlyLeaderboard", uid + "_" + monthId);
     await setDoc(weekRef, { uid, name: name || "", score: increment(points || 0), week: weekId, updatedAt: serverTimestamp() }, { merge: true });
     await setDoc(monthRef, { uid, name: name || "", score: increment(points || 0), month: monthId, updatedAt: serverTimestamp() }, { merge: true });
   } catch (e) {
-    // silent fail as requested
+    console.error("Error updating period leaderboards", e);
   }
-
-  // check badges after update
+  // After score change, check badges
   try {
     await checkAndAwardBadges(uid);
   } catch (e) {
-    // silent
+    console.error("Badge awarding failed", e);
   }
 }
 
 export async function checkAndAwardBadges(uid) {
-  if (!uid) return;
   const userRef = doc(db, "leaderboard", uid);
   const snap = await getDoc(userRef);
   if (!snap.exists()) return;
-  const data = snap.data() || {};
+  const data = snap.data();
   const score = data.score || 0;
   const existing = data.badges || [];
   const toAward = [];
-  BADGES.forEach(b => {
-    if (score >= b.score && !existing.includes(b.id)) toAward.push(b.id);
-  });
+  for (const b of BADGE_THRESHOLDS) {
+    if (score >= b.score && !existing.includes(b.id)) {
+      toAward.push(b.id);
+    }
+  }
   if (toAward.length > 0) {
-    // map ids to labels and store as strings like "🌟 Rising Star"
-    const newBadges = Array.from(new Set([...(existing||[]), ...toAward.map(id => {
-      const b = BADGES.find(x => x.id === id);
-      return b ? b.label : id;
-    })]));
-    await updateDoc(userRef, { badges: newBadges });
+    await updateDoc(userRef, { badges: Array.from(new Set([...(existing||[]), ...toAward])) });
   }
 }
 
@@ -79,19 +63,30 @@ export async function updateStreakOnActivity(uid) {
   if (!uid) return;
   const userRef = doc(db, "leaderboard", uid);
   const snap = await getDoc(userRef);
-  const today = new Date().toDateString();
+  const today = new Date();
+  const todayStr = today.toDateString();
   if (!snap.exists()) {
-    await setDoc(userRef, { streakCount: 1, lastActiveDate: today, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(userRef, { streakCount: 1, lastActiveDate: todayStr, lastActive: serverTimestamp() }, { merge: true });
     return;
   }
-  const data = snap.data() || {};
+  const data = snap.data();
   const last = data.lastActiveDate || null;
-  if (last === today) return; // already updated today
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  if (last === todayStr) return; // already recorded today
+  const lastDate = last ? new Date(last) : null;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
   const yesterdayStr = yesterday.toDateString();
   let newStreak = 1;
   if (last === yesterdayStr) {
     newStreak = (data.streakCount || 0) + 1;
   }
-  await updateDoc(userRef, { streakCount: newStreak, lastActiveDate: today, updatedAt: serverTimestamp() });
+  await updateDoc(userRef, { streakCount: newStreak, lastActiveDate: todayStr, lastActive: serverTimestamp() });
+}
+
+function getWeekNumber(d) {
+  // returns ISO week number
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
 }

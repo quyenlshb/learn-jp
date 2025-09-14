@@ -49,7 +49,7 @@ const Leaderboard = ({ courseId = null }) => {
         {scores.length > 0 ? (
           scores.map((s, i) => (
             <div key={i} style={{ marginBottom: "8px" }} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
-              👤 {s.name} - <b>{s.score}</b> điểm
+              👤 {s.name} — <b>{s.score}</b> điểm
             </div>
           ))
         ) : (

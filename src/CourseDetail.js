@@ -1,7 +1,7 @@
 // src/CourseDetail.js
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { db } from "./firebaseClient";\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";
+import { db } from "./firebaseClient";
 import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 
 function CourseDetail() {

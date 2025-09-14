@@ -1,4 +1,4 @@
-﻿import React\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 
 const words = [
   { kanji: "日", kana: "にち", romaji: "nichi", meaning: "ngày, mặt trời" },
