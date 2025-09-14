@@ -2,7 +2,9 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "./firebaseClient";\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";
+import { auth } from "./firebaseClient";
+import { addScore, updateStreakOnActivity } from "./firebaseHelpers";
+
 
 import Login from "./Login";
 import Dashboard from "./Dashboard";
