@@ -17,6 +17,7 @@ import DifficultReview from "./DifficultReview";
 import SpeedReview from "./SpeedReview";
 import Explore from "./Explore";
 import LeaderboardPage from "./LeaderboardPage";
+import { ToastProvider } from "./ToastManager";
 
 function App() {
   const [user, loading] = useAuthState(auth);
