@@ -314,3 +314,4 @@ const tdStyle = {
 };
 
 export default CourseView;
+});
