@@ -69,7 +69,6 @@ const CourseView = () => {
       kanji: word.kanji || "",
       kana: word.kana || "",
       meaning: word.meaning || "",
-    });
   };
 
   const handleSaveEdit = async () => {
@@ -77,7 +76,6 @@ const CourseView = () => {
       kanji: editData.kanji,
       kana: editData.kana,
       meaning: editData.meaning,
-    });
     setEditWordId(null);
     fetchWords();
   };
@@ -86,7 +84,6 @@ const CourseView = () => {
     try {
       await updateDoc(doc(db, "courses", id), {
         isPublic: !course.isPublic,
-      });
       alert(
         course.isPublic
           ? "🔒 Khóa học đã được đặt về riêng tư"
@@ -280,17 +277,6 @@ const CourseView = () => {
       </div>
     </div>
   );
-};
-
-const btnStyle = (color) => ({
-  textAlign: "center",
-  padding: "15px",
-  background: color,
-  color: "#fff",
-  textDecoration: "none",
-  borderRadius: "8px",
-}
-        </div>
         {showLeaderboard && (
           <div className="lg:col-span-1">
             <div className="bg-white p-4 rounded-xl shadow">
@@ -300,7 +286,18 @@ const btnStyle = (color) => ({
           </div>
         )}
       </div>
-    );
+    </div>
+  );
+};
+
+const btnStyle = (color) => ({
+  textAlign: "center",
+  padding: "15px",
+  background: color,
+  color: "#fff",
+  textDecoration: "none",
+  borderRadius: "8px",
+});
 
 const thStyle = {
   border: "1px solid #ddd",
@@ -314,4 +311,3 @@ const tdStyle = {
 };
 
 export default CourseView;
-});
