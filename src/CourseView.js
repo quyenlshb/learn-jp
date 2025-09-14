@@ -10,6 +10,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "./firebaseClient";
+import { addScore, updateStreakOnActivity } from "./firebaseHelpers";
 import LeaderboardCourse from "./LeaderboardCourse"; // 👉 thêm import
 
 const CourseView = () => {
