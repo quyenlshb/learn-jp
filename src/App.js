@@ -11,7 +11,6 @@ import CreateCourse from "./CreateCourse";
 import Home from "./Home";
 import Header from "./Header";
 import CourseView from "./CourseView"; // dùng CourseView, bỏ CourseDetail
-import LearnNew from "./LearnNew";
 import Review from "./Review";
 import DifficultReview from "./DifficultReview";
 import SpeedReview from "./SpeedReview";
@@ -43,7 +42,7 @@ function App() {
             <Route path="/course/:id" element={<CourseView />} />
 
             {/* Các chế độ học */}
-           <Route path="/learn-new/:id" element={<LearnNew />} />
+           } />
             <Route path="/review/:id" element={<Review />} />
 <Route path="/difficult/:id" element={<DifficultReview />} />
             <Route path="/speed-review/:id" element={<div>Trang ôn tập nhanh</div>} />
