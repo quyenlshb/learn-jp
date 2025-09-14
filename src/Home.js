@@ -66,7 +66,7 @@ const Home = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="max-w-5xl mx-auto p-6 bg-slate-50 min-h-screen" style={{ padding: "20px" }}>
       <h1>Trang chủ</h1>
 
       <h2>Khoá học của tôi</h2>

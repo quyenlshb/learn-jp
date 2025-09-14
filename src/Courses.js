@@ -27,7 +27,7 @@ const Courses = () => {
   }, []);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="max-w-5xl mx-auto p-6 bg-slate-50 min-h-screen" style={{ padding: "20px" }}>
       <h2>Chọn khoá học</h2>
       <ul>
         {courses.length > 0 ? (

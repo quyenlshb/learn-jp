@@ -4,60 +4,29 @@ import { auth } from "./firebaseClient";
 
 const Header = () => {
   const navigate = useNavigate();
-
   const handleLogout = () => {
     auth.signOut();
     navigate("/");
   };
 
   return (
-    <header
-      style={{
-        background: "#333",
-        color: "#fff",
-        padding: "10px 20px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      {/* Bên trái: menu */}
-      <nav style={{ display: "flex", gap: "15px" }}>
-        <Link
-          to="/home"
-          style={{ color: "#fff", textDecoration: "none", fontWeight: "bold" }}
-        >
-          🏠 Trang chủ
+    <header className="bg-gradient-to-r from-primary to-indigo-500 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="text-white text-2xl font-extrabold tracking-wide">
+          LearnJP
         </Link>
-        <Link
-          to="/explore"
-          style={{ color: "#fff", textDecoration: "none", fontWeight: "bold" }}
-        >
-          🌍 Khám phá
-        </Link>
-        <Link
-          to="/leaderboard"
-          style={{ color: "#fff", textDecoration: "none", fontWeight: "bold" }}
-        >
-          🏆 Bảng xếp hạng
-        </Link>
-      </nav>
-
-      {/* Bên phải: nút logout */}
-      <button
-        onClick={handleLogout}
-        style={{
-          background: "red",
-          color: "#fff",
-          border: "none",
-          padding: "8px 12px",
-          cursor: "pointer",
-          borderRadius: "5px",
-          fontWeight: "bold",
-        }}
-      >
-        Đăng xuất
-      </button>
+        <nav className="flex items-center gap-4">
+          <Link to="/courses" className="text-white hover:underline">Khóa học</Link>
+          <Link to="/leaderboard" className="text-white hover:underline">Bảng xếp hạng</Link>
+          <Link to="/learn" className="text-white hover:underline">Học</Link>
+          <button
+            onClick={handleLogout}
+            className="ml-4 bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg border border-white/10"
+          >
+            Đăng xuất
+          </button>
+        </nav>
+      </div>
     </header>
   );
 };

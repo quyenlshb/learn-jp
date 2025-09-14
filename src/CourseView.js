@@ -77,7 +77,7 @@ const CourseView = () => {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="max-w-5xl mx-auto p-6 bg-slate-50 min-h-screen" style={{ padding: "20px" }}>
       <h1>{course.title}</h1>
       <p>{course.description}</p>
       <p>
