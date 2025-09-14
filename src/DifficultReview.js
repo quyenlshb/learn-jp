@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "./firebaseClient";
+import { db, auth } from "./firebaseClient";\nimport { addScore, updateStreakOnActivity } from "./firebaseHelpers";
 
 const DifficultReview = () => {
   const { id } = useParams(); // courseId
@@ -103,7 +103,7 @@ const DifficultReview = () => {
     await updateDoc(doc(db, "courses", id, "words", word.id), {
       isLearned: true,
     });
-  };
+  \n    try{ if (auth && auth.currentUser) { addScore(auth.currentUser.uid, auth.currentUser.displayName || auth.currentUser.email, 5); updateStreakOnActivity(auth.currentUser.uid); } }catch(e){}\n};
 
   const handleAnswer = async (choice) => {
     setSelected(choice);
