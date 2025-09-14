@@ -89,7 +89,7 @@ const Home = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div style={{ display: "flex" }}>
       {/* BXH tổng bên trái */}
-      <Leaderboard />
+      
 
       {/* Nội dung chính */}
       <div style={{ flex: 1, padding: "20px" }}>

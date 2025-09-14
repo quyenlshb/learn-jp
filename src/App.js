@@ -51,7 +51,7 @@ function App() {
             <Route path="*" element={<Navigate to="/home" replace />} />
           </>
         )}
-      </Routes>
+        <Route path="/leaderboard" element={<LeaderboardPage/>} />\n      </Routes>
     </Router>
   );
 }
